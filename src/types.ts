@@ -12,6 +12,12 @@ export type RollupArgs = Partial<{
 export type Zone = keyof typeof geofenceJson;
 export type GeofenceMap = Record<Zone, number[][]>;
 
+export interface DiscordUserLink {
+  id: string,
+  avatar: string,
+  name: string,
+}
+
 //#region API types
 
 export interface Requests {

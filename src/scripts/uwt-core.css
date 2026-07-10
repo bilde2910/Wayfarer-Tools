@@ -63,15 +63,26 @@
   text-decoration: underline dotted #7f7f7f;
 }
 
+.uwftcore-discord-link-box {
+  font-weight: bold;
+}
+
+.uwftcore-discord-link-box img {
+  height: 1em;
+  display: inline-block;
+  margin-right: 5px;
+  margin-top: -4px;
+}
+
 .uwftcore-option-line {
   margin-bottom: 1rem;
 }
 
-.dark input.uwftcore-fix, .dark select.uwftcore-fix {
+.dark input.uwftcore-fix, .dark select.uwftcore-fix, .dark span.uwftcore-fix {
   background-color: #333;
 }
 
-input.uwftcore-fix, select.uwftcore-fix {
+input.uwftcore-fix, select.uwftcore-fix, span.uwftcore-fix {
   padding: 2px 5px;
 }
 

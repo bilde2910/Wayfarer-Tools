@@ -1,5 +1,5 @@
 import { BaseSchema, IDBStoreConnection } from "./idb";
-import { ApiResult, Requests, Responses } from "./types";
+import { ApiResult, DiscordUserLink, Requests, Responses } from "./types";
 import { untilTruthy, cyrb53, iterObject, makeChildNode, Logger } from "./utils";
 import { CorePluginAPI } from "./scripts/uwt-core";
 
@@ -51,6 +51,7 @@ interface RendererOptions<T> extends OptionMetadata {
   parent: HTMLElement,
   save: (v: T) => void,
   clear: () => void,
+  redraw: () => void,
 }
 
 interface OptionEditor<T> {
@@ -182,6 +183,76 @@ export class TextInputEditor implements OptionEditor<string> {
       if (input.value === "") opts.clear();
       else opts.save(input.value);
     });
+  }
+}
+
+interface DiscordUserLinkEditorOptions {
+  authWindowUrl: string,
+  confirmationText: string,
+  connectCallback?: () => void,
+}
+
+const DISCORD_AUTH_UUID = "04dae49a-ee23-4a62-a18e-bcfa2fbffaed";
+
+export class DiscordUserLinkEditor implements OptionEditor<DiscordUserLink | null> {
+  options: DiscordUserLinkEditorOptions;
+  constructor(options: DiscordUserLinkEditorOptions) {
+    this.options = options;
+  }
+
+  render(opts: RendererOptions<DiscordUserLink | null>) {
+    const label = makeChildNode(opts.parent, "label", `${opts.label}: `);
+    const box = makeChildNode(label, "span");
+    box.classList.add("uwftcore-discord-link-box");
+    box.classList.add("uwftcore-fix");
+    if (opts.help) {
+      label.title = opts.help;
+      label.classList.add("uwftcore-help-available");
+    }
+
+    if (opts.value !== null) {
+      const avatar = makeChildNode(box, "img") as HTMLImageElement;
+      avatar.src = opts.value.avatar;
+      makeChildNode(box, "span", opts.value.name);
+      const dcButton = makeChildNode(box, "button");
+      dcButton.innerHTML = "&#x274C;";
+      dcButton.addEventListener("click", (e) => {
+        // Somehow the whole box is clickable. This fixes that:
+        if (e.offsetX < 0) return;
+        if (confirm("Are you sure you want to unlink your Discord account?")) {
+          opts.clear();
+          opts.redraw();
+        }
+      });
+      dcButton.style.marginLeft = "5px";
+    } else {
+      const authButton = document.createElement("button");
+      authButton.textContent = "Authenticate";
+      authButton.addEventListener("click", (e) => {
+        // Somehow the whole box is clickable. This fixes that:
+        if (e.offsetX < 0) return;
+        if (confirm(this.options.confirmationText)) {
+          const url = URL.parse(this.options.authWindowUrl);
+          const authWindow = window.open(this.options.authWindowUrl);
+          const listener = (e: MessageEvent) => {
+            if (e.data.uuid !== DISCORD_AUTH_UUID) return;
+            if (e.origin === url!.origin) {
+              authWindow!.close();
+              window.removeEventListener("message", listener);
+              const data: DiscordUserLink = e.data.data;
+              opts.save(data);
+              box.removeChild(authButton);
+              opts.redraw();
+              setTimeout(() => {
+                this.options.connectCallback?.();
+              }, 10);
+            }
+          };
+          window.addEventListener("message", listener);
+        }
+      });
+      box.appendChild(authButton);
+    }
   }
 }
 
@@ -790,8 +861,18 @@ const renderEditors = (options: AddonOptionsEntry[]) => async () => {
       option.editor.render({
         value: option.iface.get(key),
         parent: lineItem,
-        save: (v: any) => option.iface.set(key, v),
-        clear: () => option.iface.clear(key),
+        save(v: any) {
+          option.iface.set(key, v);
+          this.value = v;
+        },
+        clear() {
+          option.iface.clear(key);
+          this.value = option.iface.get(key);
+        },
+        redraw() {
+          this.parent.innerHTML = "";
+          option.editor.render(this);
+        },
         ...option,
       });
     }
