@@ -16,10 +16,10 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { makeChildNode } from "src/utils";
-import { AnyContribution, ContributionStatus, ContributionType, Nomination, SubmissionsResult } from "src/types";
-import { AppSubmissionsListItemElement } from "src/unsafe";
+import { register } from "../core";
+import { makeChildNode } from "../utils";
+import { AnyContribution, ContributionStatus, ContributionType, Nomination, SubmissionsResult } from "../types";
+import { AppSubmissionsListItemElement } from "../unsafe";
 
 import "./proximity-block.css";
 

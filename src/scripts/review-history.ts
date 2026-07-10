@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register, UnixTimestampDateOnlyEditor } from "src/core";
-import { untilTruthy, downloadAsFile, filterObject, haversine, isDarkMode, makeChildNode, readFile } from "src/utils";
-import { AnyReview, AnySubmittedReview, EditReview, NewReview, PhotoReview, SubmittedEditReview, SubmittedNewReview, SubmittedPhotoReview } from "src/types";
+import { register, UnixTimestampDateOnlyEditor } from "../core";
+import { untilTruthy, downloadAsFile, filterObject, haversine, isDarkMode, makeChildNode, readFile } from "../utils";
+import { AnyReview, AnySubmittedReview, EditReview, NewReview, PhotoReview, SubmittedEditReview, SubmittedNewReview, SubmittedPhotoReview } from "../types";
 
 import agGrid from "ag-grid-community";
 

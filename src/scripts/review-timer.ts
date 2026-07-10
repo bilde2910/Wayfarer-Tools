@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { CheckboxEditor, NumericInputEditor, register } from "src/core";
-import { untilTruthy, insertAfter } from "src/utils";
-import { AnyReview } from "src/types";
+import { CheckboxEditor, NumericInputEditor, register } from "../core";
+import { untilTruthy, insertAfter } from "../utils";
+import { AnyReview } from "../types";
 
 import "./review-timer.css";
 

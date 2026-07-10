@@ -16,8 +16,8 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { makeChildNode, readFiles } from "src/utils";
+import { register } from "../core";
+import { makeChildNode, readFiles } from "../utils";
 
 import EmlImportIcon from "../../assets/eml-import.svg";
 import "./eml-importer.css";

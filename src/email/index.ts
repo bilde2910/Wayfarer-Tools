@@ -1,9 +1,9 @@
 import diacritics from "./diacritics.json" with { type: "json" };
-import { iterObject, Logger, makeChildNode } from "src/utils";
+import { iterObject, Logger, makeChildNode } from "../utils";
 import { decodeBodyUsingCTE, extractEmail, parseMIME } from "./parsing";
 import { EmailFile, Header, StoredEmail } from "./types";
 import { DisambiguationFailedError, HeaderNotFoundError, InvalidContentTypeError, NoMatchingTemplateError } from "./errors";
-import { IDBStoreConnection, KeyNotFoundError } from "src/idb";
+import { IDBStoreConnection, KeyNotFoundError } from "../idb";
 import emailTemplates, { EmailTemplate } from "./templates";
 
 type IDBConnectionFactory = (mode: "readonly" | "readwrite") => Promise<IDBStoreConnection<StoredEmail>>;

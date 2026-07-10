@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { CheckboxEditor, NumericInputEditor, register } from "src/core";
-import { untilTruthy, debounce, weightNumericArray } from "src/utils";
-import { AnyContribution, ContributionStatus, SubmissionsResult } from "src/types";
+import { CheckboxEditor, NumericInputEditor, register } from "../core";
+import { untilTruthy, debounce, weightNumericArray } from "../utils";
+import { AnyContribution, ContributionStatus, SubmissionsResult } from "../types";
 
 import { Cluster, ClusterStats, Marker, MarkerClusterer, Renderer } from "@googlemaps/markerclusterer";
 

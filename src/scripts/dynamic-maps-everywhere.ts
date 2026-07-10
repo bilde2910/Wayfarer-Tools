@@ -16,8 +16,8 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { CheckboxEditor, register, SelectBoxEditor } from "src/core";
-import { untilTruthy } from "src/utils";
+import { CheckboxEditor, register, SelectBoxEditor } from "../core";
+import { untilTruthy } from "../utils";
 
 import "./dynamic-maps-everywhere.css";
 

@@ -30,3 +30,6 @@ declare module "*.md" {
   }
   export default {} as Exports;
 }
+
+declare module "*.css";
+declare module "*.scss";

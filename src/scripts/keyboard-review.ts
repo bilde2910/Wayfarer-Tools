@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { CheckboxEditor, register } from "src/core";
-import { untilTruthy } from "src/utils";
-import { AnyReview, EditReview, NewReview, PhotoReview } from "src/types";
+import { CheckboxEditor, register } from "../core";
+import { untilTruthy } from "../utils";
+import { AnyReview, EditReview, NewReview, PhotoReview } from "../types";
 
 import "./keyboard-review.scss";
 

@@ -16,12 +16,12 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { CheckboxEditor, NotificationColor, register } from "src/core";
-import { filterObject, iterObject, untilTruthy, indexToMap, makeChildNode, toUtcIsoDate, iterKeys, assignAll, Logger, shiftDays } from "src/utils";
-import { AnyContribution, ContributionStatus, ContributionType, EditContribution, Nomination, OriginalPoiData, SubmissionsResult } from "src/types";
-import { EmailAPI, WayfarerEmail } from "src/email";
-import { IDBStoreConnection, KeyNotFoundError } from "src/idb";
-import { EmailStyle, EmailType, StoredEmail } from "src/email/types";
+import { CheckboxEditor, NotificationColor, register } from "../core";
+import { filterObject, iterObject, untilTruthy, indexToMap, makeChildNode, toUtcIsoDate, iterKeys, assignAll, Logger, shiftDays } from "../utils";
+import { AnyContribution, ContributionStatus, ContributionType, EditContribution, Nomination, OriginalPoiData, SubmissionsResult } from "../types";
+import { EmailAPI, WayfarerEmail } from "../email";
+import { IDBStoreConnection, KeyNotFoundError } from "../idb";
+import { EmailStyle, EmailType, StoredEmail } from "../email/types";
 
 import "./nomination-status-history.css";
 
@@ -31,7 +31,7 @@ import IconPhoto from "../../assets/nomination-history/photo.svg";
 import IconEditLocation from "../../assets/nomination-history/edit-location.svg";
 import IconEditTitle from "../../assets/nomination-history/edit-title.svg";
 import IconEditDescription from "../../assets/nomination-history/edit-description.svg";
-import { scriptInfo } from "src/constants";
+import { scriptInfo } from "../constants";
 
 const EMAIL_PROCESSING_VERSION = 2;
 const STRICT_MODE = true;

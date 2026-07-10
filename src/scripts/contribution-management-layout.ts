@@ -16,10 +16,10 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { CheckboxEditor, register } from "src/core";
-import { untilTruthy, makeChildNode } from "src/utils";
-import { AnyContribution, AnyEditContribution, ContributionStatus, ContributionType, EditContributionType, SubmissionsResult } from "src/types";
-import { AppSubmissionsListItemElement } from "src/unsafe";
+import { CheckboxEditor, register } from "../core";
+import { untilTruthy, makeChildNode } from "../utils";
+import { AnyContribution, AnyEditContribution, ContributionStatus, ContributionType, EditContributionType, SubmissionsResult } from "../types";
+import { AppSubmissionsListItemElement } from "../unsafe";
 
 import "./contribution-management-layout.css";
 

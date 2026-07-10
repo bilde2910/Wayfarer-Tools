@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { untilTruthy, insertAfter, makeChildNode } from "src/utils";
-import { Profile } from "src/types";
+import { register } from "../core";
+import { untilTruthy, insertAfter, makeChildNode } from "../utils";
+import { Profile } from "../types";
 
 import "./extended-stats.css";
 

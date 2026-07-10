@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { CheckboxEditor, register, SelectBoxEditor } from "src/core";
-import { untilTruthy, haversine } from "src/utils";
-import { AnyReview } from "src/types";
+import { CheckboxEditor, register, SelectBoxEditor } from "../core";
+import { untilTruthy, haversine } from "../utils";
+import { AnyReview } from "../types";
 
 import "./extended-stats.css";
 

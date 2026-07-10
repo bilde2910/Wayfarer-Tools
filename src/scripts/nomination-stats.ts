@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { untilTruthy, downloadAsFile, iterKeys, iterObject, makeChildNode } from "src/utils";
-import { AnyContribution, ContributionStatus, ContributionType, EditContribution, SubmissionsResult } from "src/types";
+import { register } from "../core";
+import { untilTruthy, downloadAsFile, iterKeys, iterObject, makeChildNode } from "../utils";
+import { AnyContribution, ContributionStatus, ContributionType, EditContribution, SubmissionsResult } from "../types";
 
 import "./nomination-stats.css";
 

@@ -1,10 +1,10 @@
-import { register } from "src/core";
-import { untilTruthy, makeChildNode } from "src/utils";
-import { UserSettings } from "src/types";
-import { StoredEmail } from "src/email/types";
+import { register } from "../core";
+import { untilTruthy, makeChildNode } from "../utils";
+import { UserSettings } from "../types";
+import { StoredEmail } from "../email/types";
 
 import "./uwt-core.css";
-import { EmailAPI } from "src/email";
+import { EmailAPI } from "../email";
 
 export interface CorePluginAPI {
   email: () => Promise<EmailAPI>,

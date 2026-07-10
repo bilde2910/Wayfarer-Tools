@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { untilTruthy, makeChildNode } from "src/utils";
-import { AnySubmittedReview } from "src/types";
+import { register } from "../core";
+import { untilTruthy, makeChildNode } from "../utils";
+import { AnySubmittedReview } from "../types";
 
 import "./review-counter.css";
 

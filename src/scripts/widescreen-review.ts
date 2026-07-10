@@ -16,8 +16,8 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { makeChildNode } from "src/utils";
+import { register } from "../core";
+import { makeChildNode } from "../utils";
 
 import "./widescreen-review.css";
 

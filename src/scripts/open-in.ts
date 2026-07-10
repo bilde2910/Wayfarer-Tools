@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { untilTruthy, insertAfter, iterObject, makeChildNode, readGeofences } from "src/utils";
-import { AnyReview, AnyContribution, Showcase, SubmissionsResult, Zone, ContributionType } from "src/types";
+import { register } from "../core";
+import { untilTruthy, insertAfter, iterObject, makeChildNode, readGeofences } from "../utils";
+import { AnyReview, AnyContribution, Showcase, SubmissionsResult, Zone, ContributionType } from "../types";
 
 import proj4 from "proj4";
 

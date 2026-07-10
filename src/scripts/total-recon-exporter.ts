@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register, SelectBoxEditor, TextInputEditor } from "src/core";
-import { deepEquals, filterObject, haversine, iterObject, sleep } from "src/utils";
-import { AnyContribution, ContributionStatus, ContributionType, EditContribution, Nomination, SubmissionsResult } from "src/types";
+import { register, SelectBoxEditor, TextInputEditor } from "../core";
+import { deepEquals, filterObject, haversine, iterObject, sleep } from "../utils";
+import { AnyContribution, ContributionStatus, ContributionType, EditContribution, Nomination, SubmissionsResult } from "../types";
 
 import "./total-recon-exporter.css";
 

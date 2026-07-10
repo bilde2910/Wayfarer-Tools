@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { NumericInputEditor, register } from "src/core";
-import { makeChildNode } from "src/utils";
-import { AnyReview, EditReview, TextEditOption } from "src/types";
+import { NumericInputEditor, register } from "../core";
+import { makeChildNode } from "../utils";
+import { AnyReview, EditReview, TextEditOption } from "../types";
 import { diffChars } from "diff";
 
 import "./better-diff.css";

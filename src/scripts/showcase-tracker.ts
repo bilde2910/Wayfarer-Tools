@@ -16,14 +16,14 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { deepEquals, makeChildNode, toUtcIsoDate, untilTruthy } from "src/utils";
-import { ContributionType, Showcase, ShowcasedPortal } from "src/types";
+import { register } from "../core";
+import { deepEquals, makeChildNode, toUtcIsoDate, untilTruthy } from "../utils";
+import { ContributionType, Showcase, ShowcasedPortal } from "../types";
 
 import "./showcase-tracker.css";
 
 import { S2 } from "s2-geometry";
-import { AppSubmissionsListItemElement } from "src/unsafe";
+import { AppSubmissionsListItemElement } from "../unsafe";
 
 interface StoredShowcase {
   id: number,

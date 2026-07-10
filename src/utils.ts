@@ -322,8 +322,8 @@ export class Logger {
     this.#subsystem = subsystem;
   }
 
-  debug(...data: any) {
-    //console.debug("[D]", "[unified-wf-tools]", `[${this.#subsystem}]`, ...data);
+  debug(..._data: any) {
+    //console.debug("[D]", "[unified-wf-tools]", `[${this.#subsystem}]`, ..._data);
   }
 
   info(...data: any) {

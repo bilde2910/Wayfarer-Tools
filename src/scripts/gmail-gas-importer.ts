@@ -16,8 +16,8 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register } from "src/core";
-import { iterObject, makeChildNode, shiftDays, toUtcIsoDate } from "src/utils";
+import { register } from "../core";
+import { iterObject, makeChildNode, shiftDays, toUtcIsoDate } from "../utils";
 
 import GASImportIcon from "../../assets/gmail-gas-importer/ga-script.svg";
 import GASUserManual from "../../assets/gmail-gas-importer/user-manual.html";

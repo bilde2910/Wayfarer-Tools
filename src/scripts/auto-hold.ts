@@ -16,9 +16,9 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { register, TextInputEditor } from "src/core";
-import { sleep } from "src/utils";
-import { ContributionStatus, ContributionType, SubmissionsResult } from "src/types";
+import { register, TextInputEditor } from "../core";
+import { sleep } from "../utils";
+import { ContributionStatus, ContributionType, SubmissionsResult } from "../types";
 
 import "./auto-hold.css";
 
