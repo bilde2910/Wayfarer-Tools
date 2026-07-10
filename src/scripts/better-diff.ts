@@ -1,5 +1,5 @@
 // Copyright 2025 bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { NumericInputEditor, register } from "src/core";
@@ -78,7 +78,7 @@ export default () => {
         const display = makeChildNode(node, "span");
         for (const part of analysis[hash]) {
           const span = makeChildNode(display, "span", part.contents);
-          if (part.differs) span.classList.add("oprtbdiff-differs");
+          if (part.differs) span.classList.add("uwftbdiff-differs");
         }
       };
 

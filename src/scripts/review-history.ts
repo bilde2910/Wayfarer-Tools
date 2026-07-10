@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register, UnixTimestampDateOnlyEditor } from "src/core";
@@ -85,7 +85,7 @@ export default () => {
     id: "review-history",
     name: "Review History",
     authors: ["tehstone", "bilde2910"],
-    description: "Add local review history storage to OPR",
+    description: "Add local review history storage to Wayfarer",
     defaultConfig: {
       importAfter: 0,
       importAround: { // TODO: Configurable
@@ -158,7 +158,7 @@ export default () => {
       const addRHButtons = async () => {
         const ref = await untilTruthy(() => document.querySelector("wf-rating-bar"));
         const outer = makeChildNode(ref.parentElement!, "div");
-        outer.classList.add("oprrh-idb");
+        outer.classList.add("uwtrh-idb");
 
         makeChildNode(outer, "p", "Review history:");
         makeChildNode(outer, "button", "Export")
@@ -276,7 +276,7 @@ export default () => {
         const ratingNarRef = await untilTruthy(() => document.querySelector("wf-rating-bar"));
         const parent = ratingNarRef.parentNode!.parentNode!;
         const searchBox = document.createElement("input");
-        searchBox.classList.add("oprtcore-fix", "oprtcore-ui-large-input");
+        searchBox.classList.add("uwftcore-fix", "uwftcore-ui-large-input");
         searchBox.placeholder = "Search...";
         const tables = [
           {
@@ -303,14 +303,14 @@ export default () => {
         for (const { label, table } of tables) {
           const btn = makeChildNode(container, "button", label);
           btn.addEventListener("click", () => toggleTableDisplay(table, tables.map(t => t.table)));
-          btn.classList.add("oprtcore-ui-button");
+          btn.classList.add("uwftcore-ui-button");
           btns.push(btn);
         }
         for (const btn of btns) {
           btn.addEventListener("click", (ev) => {
-            for (const b of btns) b.classList.remove("oprtcore-ui-button-active");
+            for (const b of btns) b.classList.remove("uwftcore-ui-button-active");
             const e = ev.target as HTMLElement;
-            e.classList.add("oprtcore-ui-button-active");
+            e.classList.add("uwftcore-ui-button-active");
           });
         }
         container.appendChild(searchBox);
@@ -447,7 +447,7 @@ export default () => {
       const makeDataTable = <T>(searchBox: HTMLInputElement, gridOptions: agGrid.GridOptions<T>) => {
         logger.info(gridOptions);
         const container = document.createElement("div");
-        container.classList.add("oprrh-table");
+        container.classList.add("uwtrh-table");
         const api = agGrid.createGrid(container, {
           ...gridOptions,
           theme: agGrid.themeQuartz.withPart(isDarkMode() ? agGrid.colorSchemeDark : agGrid.colorSchemeLight),

@@ -1,11 +1,11 @@
 import { BaseSchema, IDBStoreConnection } from "./idb";
 import { ApiResult, Requests, Responses } from "./types";
 import { untilTruthy, cyrb53, iterObject, makeChildNode, Logger } from "./utils";
-import { CorePluginAPI } from "./scripts/opr-tools-core";
+import { CorePluginAPI } from "./scripts/uwt-core";
 
 import ImportIcon from "../assets/import.svg";
 
-const CORE_ADDON_ID = "opr-tools-core";
+const CORE_ADDON_ID = "uwt-core";
 const ADDON_APIS: {
   [CORE_ADDON_ID]?: CorePluginAPI,
 } = {};
@@ -62,7 +62,7 @@ export class CheckboxEditor implements OptionEditor<boolean> {
     const label = makeChildNode(opts.parent, "label");
     if (opts.help) {
       label.title = opts.help;
-      label.classList.add("oprtcore-help-available");
+      label.classList.add("uwftcore-help-available");
     }
     const checkbox = document.createElement("input");
     label.appendChild(checkbox);
@@ -85,7 +85,7 @@ export class SelectBoxEditor<T extends string> implements OptionEditor<T> {
     const label = makeChildNode(opts.parent, "label", `${opts.label}: `);
     if (opts.help) {
       label.title = opts.help;
-      label.classList.add("oprtcore-help-available");
+      label.classList.add("uwftcore-help-available");
     }
     const select = document.createElement("select");
     label.appendChild(select);
@@ -95,7 +95,7 @@ export class SelectBoxEditor<T extends string> implements OptionEditor<T> {
       option.value = v;
       select.appendChild(option);
     }
-    select.classList.add("oprtcore-fix");
+    select.classList.add("uwftcore-fix");
     select.value = opts.value;
     select.addEventListener("change", () => {
       opts.save(select.value as T);
@@ -108,11 +108,11 @@ export class UnixTimestampDateOnlyEditor implements OptionEditor<number> {
     const label = makeChildNode(opts.parent, "label", `${opts.label}: `);
     if (opts.help) {
       label.title = opts.help;
-      label.classList.add("oprtcore-help-available");
+      label.classList.add("uwftcore-help-available");
     }
     const input = document.createElement("input");
     label.appendChild(input);
-    input.classList.add("oprtcore-fix");
+    input.classList.add("uwftcore-fix");
     input.setAttribute("type", "date");
     input.value = opts.value ? new Date(opts.value).toISOString().substring(0, 10) : "";
     input.addEventListener("change", () => {
@@ -138,7 +138,7 @@ export class NumericInputEditor implements OptionEditor<number> {
     const label = makeChildNode(opts.parent, "label", `${opts.label}: `);
     if (opts.help) {
       label.title = opts.help;
-      label.classList.add("oprtcore-help-available");
+      label.classList.add("uwftcore-help-available");
     }
     const input = document.createElement("input");
     input.type = "number";
@@ -146,7 +146,7 @@ export class NumericInputEditor implements OptionEditor<number> {
     if (typeof this.options?.max !== "undefined") input.max = this.options.max.toString();
     if (typeof this.options?.step !== "undefined") input.step = this.options.step.toString();
     label.appendChild(input);
-    input.classList.add("oprtcore-fix");
+    input.classList.add("uwftcore-fix");
     input.value = opts.value.toString();
     input.addEventListener("change", () => {
       if (input.value === "") opts.clear();
@@ -170,13 +170,13 @@ export class TextInputEditor implements OptionEditor<string> {
     const label = makeChildNode(opts.parent, "label", `${opts.label}: `);
     if (opts.help) {
       label.title = opts.help;
-      label.classList.add("oprtcore-help-available");
+      label.classList.add("uwftcore-help-available");
     }
     const input = document.createElement("input");
     input.type = "text";
     if (typeof this.options?.placeholder !== "undefined") input.placeholder = this.options.placeholder;
     label.appendChild(input);
-    input.classList.add("oprtcore-fix");
+    input.classList.add("uwftcore-fix");
     input.value = opts.value.toString();
     input.addEventListener("change", () => {
       if (input.value === "") opts.clear();
@@ -217,7 +217,7 @@ class AddonSettings<T> {
   }
 
   get<Tk extends keyof T>(key: Tk): T[Tk] {
-    const data = this.storage.getItem(`opr-tools-settings-${userHash}`) ?? "{}";
+    const data = this.storage.getItem(`uwt-tools-settings-${userHash}`) ?? "{}";
     const props: T = JSON.parse(data)[this.key] ?? {};
     if (Object.prototype.hasOwnProperty.call(props, key)) {
       return props[key];
@@ -227,18 +227,18 @@ class AddonSettings<T> {
   }
 
   set<Tk extends keyof T>(key: Tk, value: T[Tk]) {
-    const data = this.storage.getItem(`opr-tools-settings-${userHash}`) ?? "{}";
+    const data = this.storage.getItem(`uwt-tools-settings-${userHash}`) ?? "{}";
     const props = JSON.parse(data);
     if (!Object.prototype.hasOwnProperty.call(props, this.key)) {
       props[this.key] = {};
     }
     props[this.key][key] = value;
     const nData = JSON.stringify(props);
-    this.storage.setItem(`opr-tools-settings-${userHash}`, nData);
+    this.storage.setItem(`uwt-tools-settings-${userHash}`, nData);
   }
 
   clear<Tk extends keyof T>(key: Tk) {
-    const data = this.storage.getItem(`opr-tools-settings-${userHash}`) ?? "{}";
+    const data = this.storage.getItem(`uwt-tools-settings-${userHash}`) ?? "{}";
     const props = JSON.parse(data);
     if (!Object.prototype.hasOwnProperty.call(props, this.key)) {
       props[this.key] = {};
@@ -247,7 +247,7 @@ class AddonSettings<T> {
       delete props[this.key][key];
     }
     const nData = JSON.stringify(props);
-    this.storage.setItem(`opr-tools-settings-${userHash}`, nData);
+    this.storage.setItem(`uwt-tools-settings-${userHash}`, nData);
   }
 
   setUserEditable<Tk extends keyof T>(key: Tk, options: UserEditableOption<T[Tk]>) {
@@ -271,7 +271,7 @@ const getIDBInstance = (objectStoreName: string, version?: number) => new Promis
   }
 
   const logger = new Logger("core:idb");
-  const openRequest = indexedDB.open(`opr-tools-${userHash}`, version);
+  const openRequest = indexedDB.open(`uwt-tools-${userHash}`, version);
   openRequest.onsuccess = () => {
     const db = openRequest.result;
     const dbVer = db.version;
@@ -294,10 +294,10 @@ const getIDBInstance = (objectStoreName: string, version?: number) => new Promis
 });
 
 const getNotificationDiv = () => {
-  const div = document.getElementById("oprtcore-notifications");
+  const div = document.getElementById("uwftcore-notifications");
   if (div) return div;
   const nc = makeChildNode(document.getElementsByTagName("body")[0], "div");
-  nc.id = "oprtcore-notifications";
+  nc.id = "uwftcore-notifications";
   return nc;
 };
 
@@ -319,7 +319,7 @@ const importers: Importer[] = [];
 
 const createSidebarItems = (sidebar: Node) => {
   for (const [id, item] of iterObject(sidebarItems)) {
-    const elId = `oprtcore-sidebar-item-${id}`;
+    const elId = `uwftcore-sidebar-item-${id}`;
     if (document.getElementById(elId) === null) {
       const div = makeChildNode(sidebar, "div");
       div.id = elId;
@@ -328,7 +328,7 @@ const createSidebarItems = (sidebar: Node) => {
       anchor.title = item.label;
       anchor.addEventListener("click", () => item.callback());
       const img = makeChildNode(anchor, "img") as HTMLImageElement;
-      img.classList.add("sidebar-link__icon", "oprtcore-sidebar-icon");
+      img.classList.add("sidebar-link__icon", "uwftcore-sidebar-icon");
       img.src = item.imageUrl;
       makeChildNode(anchor, "span", item.label);
     }
@@ -493,7 +493,7 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
           send.apply(this, args);
         } else {
           const logger = new Logger("core:toolbox");
-          logger.warn(`OPR Tools addon ${addonId} blocked a ${method} request to ${url}!`);
+          logger.warn(`Wayfarer Tools addon ${addonId} blocked a ${method} request to ${url}!`);
         }
       };
     })(XMLHttpRequest.prototype.send);
@@ -571,16 +571,16 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
     const message = typeof options.message === "string" ? document.createTextNode(options.message) : options.message;
 
     const notification = makeChildNode(div, "div");
-    notification.classList.add("oprtcore-notification", `oprtcore-nbg-${options.color}`);
+    notification.classList.add("uwftcore-notification", `uwftcore-nbg-${options.color}`);
     if (options.dismissable ?? true) {
       notification.addEventListener("click", () => notification.remove());
     }
     const contentWrapper = makeChildNode(notification, "div");
-    contentWrapper.classList.add("oprtcore-notify-content-wrapper");
+    contentWrapper.classList.add("uwftcore-notify-content-wrapper");
 
     if (typeof options.icon !== "undefined") {
       const iconWrapper = makeChildNode(contentWrapper, "div");
-      iconWrapper.classList.add("oprtcore-notify-icon-wrapper");
+      iconWrapper.classList.add("uwftcore-notify-icon-wrapper");
       const img = makeChildNode(iconWrapper, "img") as HTMLImageElement;
       img.src = options.icon;
     }
@@ -609,9 +609,9 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
   public async createModal(...cssClasses: string[]) {
     const body = await untilTruthy(() => document.querySelector("body"));
     const outer = makeChildNode(body, "div");
-    outer.classList.add("oprtcore-fullscreen-overlay");
+    outer.classList.add("uwftcore-fullscreen-overlay");
     const inner = makeChildNode(outer, "div");
-    inner.classList.add("oprtcore-fullscreen-inner", ...cssClasses);
+    inner.classList.add("uwftcore-fullscreen-inner", ...cssClasses);
     return {
       container: inner,
       dismiss: () => outer.remove(),
@@ -625,18 +625,18 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
         imageUrl: ImportIcon,
         label: "Import Data",
         callback: async () => {
-          const { container, dismiss } = await this.createModal("oprtcore-modal-common", "oprtcore-import-options");
-          makeChildNode(container, "h1", "Import data to OPR Tools");
+          const { container, dismiss } = await this.createModal("uwftcore-modal-common", "uwftcore-import-options");
+          makeChildNode(container, "h1", "Import data to Wayfarer Tools");
           makeChildNode(container, "p", "Please select the kind of data you want to import.");
           for (const method of importers) {
             const btn = makeChildNode(container, "div");
-            btn.classList.add("oprtcore-import-method");
+            btn.classList.add("uwftcore-import-method");
             if (typeof method.icon !== "undefined") {
               btn.style.paddingLeft = "60px";
               btn.style.backgroundImage = `url(${method.icon})`;
             }
-            makeChildNode(btn, "p", method.title).classList.add("oprtcore-import-method-title");
-            makeChildNode(btn, "p", method.description).classList.add("oprtcore-import-method-desc");
+            makeChildNode(btn, "p", method.title).classList.add("uwftcore-import-method-title");
+            makeChildNode(btn, "p", method.description).classList.add("uwftcore-import-method-desc");
             btn.addEventListener("click", () => {
               dismiss();
               method.callback();
@@ -769,7 +769,7 @@ const renderEditors = (options: AddonOptionsEntry[]) => async () => {
   const ref = await untilTruthy(() => document.querySelector("app-settings"));
   const box = makeChildNode(ref, "div");
   box.classList.add("max-w-md");
-  box.id = "oprtoolsMainPluginSettingsPane";
+  box.id = "uwftoolsMainPluginSettingsPane";
   const header = makeChildNode(box, "h3", "Plugin Settings");
   header.classList.add("wf-page-header");
 
@@ -785,7 +785,7 @@ const renderEditors = (options: AddonOptionsEntry[]) => async () => {
 
     for (const [key, option] of iterObject(entry.options)) {
       const lineItem = makeChildNode(entryBody, "div");
-      lineItem.classList.add("oprtcore-option-line");
+      lineItem.classList.add("uwftcore-option-line");
 
       option.editor.render({
         value: option.iface.get(key),

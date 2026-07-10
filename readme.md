@@ -1,6 +1,6 @@
-# Unofficial Tools for OPR
+# Unofficial Tools for Wayfarer
 
-This repository is still very much a work in progress. The goal is to port most of the addons from [tehstone's repo](https://github.com/tehstone/wayfarer-addons) from Wayfarer to OPR. At the same time, I'm taking the opportunity to do a major rework of the userscript structure to make the scripts much more pleasant and safe to code.
+This repository is still very much a work in progress. The goal is to rework most of the addons from [tehstone's repo](https://github.com/tehstone/wayfarer-addons) to a new unified userscript structure, in an effort to make the scripts much easier to install and develop.
 
 <details>
   <summary>Current script porting progress</summary>
@@ -47,21 +47,21 @@ Some options include:
 - [Greasemonkey](https://www.greasespot.net/)
 - [Violentmonkey](https://github.com/Violentmonkey/Violentmonkey)
 
-**⚠️ OPR Tools does not support IITC Button!**
+**⚠️ Wayfarer Tools does not support IITC Button!**
 
-IITC Button will offer to install OPR Tools for you, but it will not actually run it, rendering OPR Tools non-functional. Please switch to a general-purpose UserScript manager instead, like one of those listed above, if you want to use OPR Tools.
+IITC Button will offer to install Wayfarer Tools for you, but it will not actually run it, rendering Wayfarer Tools non-functional. Please switch to a general-purpose UserScript manager instead, like one of those listed above, if you want to use Wayfarer Tools.
 
 ## Installation
 
-As noted previously, the current state of this script is very early development. If you want to be an early tester, you can install all of the OPR tools using this link:
+As noted previously, the current state of this script is very early development. If you want to be an early tester, you can install all of the Wayfarer tools using this link:
 
-https://static.varden.info/opr-tools/dist/opr-tools.user.js
+https://static.varden.info/wayfarer-tools/dist/unified-wayfarer-tools.user.js
 
 ## Setup
 
 If you're familiar with the older [Wayfarer Addons](https://github.com/tehstone/wayfarer-addons) this part will be a bit different.
 Installation of the single script linked previously will make all current tools available.
-Individual tools can turned on and off from the [OPR Settings page](https://opr.ingress.com/new/settings):
+Individual tools can turned on and off from the [Wayfarer Settings page](https://wayfarer.nianticlabs.com/new/settings):
 
 ![Example Screenshot](https://i.imgur.com/LxYytUU.png)
 
@@ -98,7 +98,7 @@ This tool enables nearly full control of the review page via the keyboard.
 
 ## Nomination Map 
 
-Places a map of all your contributions at the top of the [Contributions Page](https://opr.ingress.com/new/nominations). Also places a counter of the currently listed contributions above the list, this counter updates whenever the search or filter is updated.
+Places a map of all your contributions at the top of the [Contributions Page](https://wayfarer.nianticlabs.com/new/nominations). Also places a counter of the currently listed contributions above the list, this counter updates whenever the search or filter is updated.
 
 ## Nomination Stats
 

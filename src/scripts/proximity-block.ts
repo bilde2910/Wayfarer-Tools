@@ -1,5 +1,5 @@
 // Copyright 2025 bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -76,11 +76,11 @@ export default () => {
       };
 
       const updateRejectionLabels = (item: AppSubmissionsListItemElement, nom: AnyContribution) => {
-        // Remove oprtpb-blocked class if already present
-        const blockedTags = item.querySelectorAll(".oprtpb-blocked-tag");
+        // Remove uwftpb-blocked class if already present
+        const blockedTags = item.querySelectorAll(".uwftpb-blocked-tag");
         for (let i = blockedTags.length - 1; i >= 0; i--) blockedTags[i].remove();
-        const hiddenTags = item.querySelectorAll(".oprtpb-blocked-hidden");
-        for (let i = hiddenTags.length - 1; i >= 0; i--) hiddenTags[i].classList.remove("oprtpb-blocked-hidden");
+        const hiddenTags = item.querySelectorAll(".uwftpb-blocked-hidden");
+        for (let i = hiddenTags.length - 1; i >= 0; i--) hiddenTags[i].classList.remove("uwftpb-blocked-hidden");
 
         if (nom.type !== ContributionType.NOMINATION) return;
         if (nom.status !== ContributionStatus.NOMINATED) return;
@@ -93,11 +93,11 @@ export default () => {
             // Hide existing tag
             const existingTags = nominationTagSet.querySelectorAll("app-submission-tag");
             if (existingTags.length === 1) {
-              existingTags[0].classList.add("oprtpb-blocked-hidden");
+              existingTags[0].classList.add("uwftpb-blocked-hidden");
             }
             // Create new tag
             const newTag = makeChildNode(nominationTagSet, "app-submission-tag");
-            newTag.classList.add("mr-1", "oprtpb-blocked-tag");
+            newTag.classList.add("mr-1", "uwftpb-blocked-tag");
             const newTagContent = makeChildNode(newTag, "div");
             newTagContent.classList.add("submission-tag", "ng-star-inserted");
             const newSpan = makeChildNode(newTagContent, "span", "Proximity Blocked");
@@ -108,11 +108,11 @@ export default () => {
 
       const makeTable = (title: string, nominations: Nomination[]) => {
         const container = document.createElement("div");
-        container.classList.add("oprtpb-container");
+        container.classList.add("uwftpb-container");
         const header = makeChildNode(container, "div", title);
-        header.classList.add("oprtpb-header");
+        header.classList.add("uwftpb-header");
         const table = makeChildNode(container, "table") as HTMLTableElement;
-        table.classList.add("oprtpb-table");
+        table.classList.add("uwftpb-table");
 
         // Sort nominations by date in descending order (most recent to oldest)
         nominations.sort((a, b) => b.order - a.order);
@@ -145,7 +145,7 @@ export default () => {
       };
 
       const interceptDetailsPane = (data: AnyContribution) => {
-        const containers = document.querySelectorAll(".oprtpb-container");
+        const containers = document.querySelectorAll(".uwftpb-container");
         for (let i = containers.length - 1; i >= 0; i--) containers[i].remove();
         if (data.type !== ContributionType.NOMINATION) return;
         const blocking = proximityBlockingFor(data);

@@ -7,6 +7,9 @@
     "lib": [
       "ES5",
       "ES6",
+      "ES7",
+      "ES2017",
+      "ES2018",
       "DOM",
       "DOM.Iterable"
     ],

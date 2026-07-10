@@ -1,12 +1,12 @@
-.oprtns-wrap-collabsible {
+.uwftns-wrap-collabsible {
   margin-bottom: 1.2rem;
 }
 
-#oprtns-collapsed-stats {
+#uwftns-collapsed-stats {
   display: none;
 }
 
-.oprtns-lbl-toggle-ns {
+.uwftns-lbl-toggle-ns {
   display: block;
   font-weight: bold;
   font-family: monospace;
@@ -21,11 +21,11 @@
   transition: all 0.25s ease-out;
 }
 
-.oprtns-lbl-toggle-ns:hover {
+.uwftns-lbl-toggle-ns:hover {
   color: lightgrey;
 }
 
-.oprtns-lbl-toggle-ns::before {
+.uwftns-lbl-toggle-ns::before {
   content: ' ';
   display: inline-block;
   border-top: 5px solid transparent;
@@ -37,47 +37,47 @@
   transition: transform .2s ease-out;
 }
 
-.oprtns-toggle {
+.uwftns-toggle {
   display: none;
 }
 
-.oprtns-toggle:checked+.oprtns-lbl-toggle-ns::before {
+.uwftns-toggle:checked+.uwftns-lbl-toggle-ns::before {
   transform: rotate(90deg) translateX(-3px);
 }
 
-.oprtns-collapsible-content {
+.uwftns-collapsible-content {
   max-height: 0px;
   overflow: hidden;
   transition: max-height .25s ease-in-out;
 }
 
-.oprtns-toggle:checked+.oprtns-lbl-toggle-ns+.oprtns-collapsible-content {
+.uwftns-toggle:checked+.uwftns-lbl-toggle-ns+.uwftns-collapsible-content {
   max-height: 9999999pt;
 }
 
-.oprtns-toggle:checked+.oprtns-lbl-toggle-ns {
+.uwftns-toggle:checked+.uwftns-lbl-toggle-ns {
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
 }
 
-.oprns-stats-table th,
-.oprns-stats-table td {
+.uwtns-stats-table th,
+.uwtns-stats-table td {
   border: white solid 1pt;
   padding: 1pt 5pt;
 }
 
-.oprns-stats-table {
+.uwtns-stats-table {
   width: 100%;
 }
 
-.oprns-stats-table th:first-child,
-.oprns-stats-table td:first-child {
+.uwtns-stats-table th:first-child,
+.uwtns-stats-table td:first-child {
   text-align: left;
   /* Left-align the content within the first column */
 }
 
-.oprns-stats-table th:not(:first-child),
-.oprns-stats-table td:not(:first-child) {
+.uwtns-stats-table th:not(:first-child),
+.uwtns-stats-table td:not(:first-child) {
   text-align: center;
   /* Center-align the content within columns 2 to 5 */
 }

@@ -1,20 +1,20 @@
-.oprnm-text {
+.uwtnm-text {
   font-size: 18px;
 }
 
-.oprnm-toggle {
+.uwtnm-toggle {
   display: none;
 }
 
-.oprnm-wrap-collapsible {
+.uwtnm-wrap-collapsible {
   margin-bottom: 1.2rem;
 }
 
-#oprnm-collapsed-map {
+#uwtnm-collapsed-map {
   display: none;
 }
 
-.oprnm-lbl-toggle {
+.uwtnm-lbl-toggle {
   display: block;
   font-weight: bold;
   font-family: monospace;
@@ -29,11 +29,11 @@
   transition: all 0.25s ease-out;
 }
 
-.oprnm-lbl-toggle:hover {
+.uwtnm-lbl-toggle:hover {
   color: lightgrey;
 }
 
-.oprnm-lbl-toggle::before {
+.uwtnm-lbl-toggle::before {
   content: ' ';
   display: inline-block;
   border-top: 5px solid transparent;
@@ -45,25 +45,25 @@
   transition: transform .2s ease-out;
 }
 
-.oprnm-toggle:checked+.oprnm-lbl-toggle::before {
+.uwtnm-toggle:checked+.uwtnm-lbl-toggle::before {
   transform: rotate(90deg) translateX(-3px);
 }
 
-.oprnm-collapsible-content {
+.uwtnm-collapsible-content {
   max-height: 0px;
   overflow: hidden;
   transition: max-height .25s ease-in-out;
 }
 
-.oprnm-toggle:checked+.oprnm-lbl-toggle+.oprnm-collapsible-content {
+.uwtnm-toggle:checked+.uwtnm-lbl-toggle+.uwtnm-collapsible-content {
   max-height: 9999999pt;
 }
 
-.oprnm-toggle:checked+.oprnm-lbl-toggle {
+.uwtnm-toggle:checked+.uwtnm-lbl-toggle {
   border-bottom-right-radius: 0;
   border-bottom-left-radius: 0;
 }
 
-.oprnm-map {
+.uwtnm-map {
   height: 400px;
 }

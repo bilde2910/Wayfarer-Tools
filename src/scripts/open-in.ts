@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -29,7 +29,7 @@ export default () => {
     id: "open-in",
     name: "Open In",
     authors: ["tehstone", "bilde2910"],
-    description: "Add open-in buttons to OPR",
+    description: "Add open-in buttons to Wayfarer",
     defaultConfig: {},
     sessionData: {},
     initialize: (toolbox, _logger, _config) => {
@@ -586,7 +586,7 @@ const injectReview = async (candidate: AnyReview) => {
   if (candidate.type === "NEW") {
     const ref = await untilTruthy(() => document.getElementById("check-duplicates-card"));
     const box = await addOpenButtons(ref.firstChild!, candidate);
-    box.classList.add("oproi-dupe-map");
+    box.classList.add("uwtoi-dupe-map");
   } else if (candidate.type === "EDIT") {
     const ref = await untilTruthy(() => document.querySelector(".review-edit-info .review-edit-info__info"));
     await addOpenButtons(ref, candidate);
@@ -599,9 +599,9 @@ const injectReview = async (candidate: AnyReview) => {
 
 const addOpenButtons = async (before: Node, portal: HasPOIData) => {
   const box = document.createElement("div");
-  box.classList.add("oproi-container");
+  box.classList.add("uwtoi-container");
   const globalBox = document.createElement("p");
-  makeChildNode(globalBox, "span", "Open in: ").classList.add("oproi-label");
+  makeChildNode(globalBox, "span", "Open in: ").classList.add("uwtoi-label");
 
   const membership = await getGeofenceMemberships(portal.lat, portal.lng);
   const regionBoxes = {} as Record<string, HTMLElement>;
@@ -610,7 +610,7 @@ const addOpenButtons = async (before: Node, portal: HasPOIData) => {
       const flag = getFlag(zone);
       regionBoxes[flag] = document.createElement("p");
       makeChildNode(regionBoxes[flag], "span", `Local maps (${flag}): `)
-        .classList.add("oproi-label");
+        .classList.add("uwtoi-label");
     }
   }
 
@@ -618,7 +618,7 @@ const addOpenButtons = async (before: Node, portal: HasPOIData) => {
   providers.forEach(e => {
     if (e.regions && !e.regions.some(region => (membership[region]))) return;
     const linkSpan = document.createElement("span");
-    linkSpan.classList.add("oproi-linkspan");
+    linkSpan.classList.add("uwtoi-linkspan");
     const link = document.createElement("a");
     let nLat = portal.lat, nLng = portal.lng;
     if (e.projection) {
@@ -640,19 +640,19 @@ const addOpenButtons = async (before: Node, portal: HasPOIData) => {
       .split("%lnga%").join(nLngA.toString())
       .split("%latb%").join(nLatB.toString())
       .split("%lngb%").join(nLngB.toString());
-    link.target = "oproi-provider-site";
+    link.target = "uwtoi-provider-site";
     link.textContent = e.label;
     linkSpan.appendChild(link);
     /*if (e.hasOwnProperty("onload")) {
       experimental = true;
       const ast = document.createElement("span");
-      ast.classList.add("oproi-experimental");
+      ast.classList.add("uwtoi-experimental");
       ast.textContent = "*";
       const tooltip = document.createElement("span");
-      tooltip.classList.add("oproi-tooltip");
+      tooltip.classList.add("uwtoi-tooltip");
       const ttTitle = document.createElement("span");
       ttTitle.textContent = "OPEN IN: EXPERIMENTAL PROVIDER";
-      ttTitle.classList.add("oproi-tttitle");
+      ttTitle.classList.add("uwtoi-tttitle");
       const ttBody = document.createElement("span");
       ttBody.textContent = "Open In uses JavaScript injection to make this map provider focus on the Wayspot's location. This is not supported by the map provider, and as such is considered an experimental feature of Open In and indicated as such with an orange star. Use at your own responsibility.";
       tooltip.appendChild(ttTitle);
@@ -677,7 +677,7 @@ const addOpenButtons = async (before: Node, portal: HasPOIData) => {
 
   if ("guid" in portal && portal.guid !== null && typeof portal.guid !== "undefined") {
     const linkSpan = document.createElement("span");
-    linkSpan.classList.add("oproi-linkspan");
+    linkSpan.classList.add("uwtoi-linkspan");
     const link = document.createElement("a");
     link.href = `https://link.ingress.com/portal/${portal.guid}`;
     link.target = "_blank";

@@ -1,25 +1,25 @@
-img.oprcml-list-image {
+img.uwtcml-list-image {
   width: 8rem !important;
 }
 
-.oprcml-details-container {
+.uwtcml-details-container {
   display: flex;
   /* Allow flex items to wrap to the next line */
   flex-wrap: wrap;
   flex-direction: row;
 }
 
-.oprcml-map-column {
+.uwtcml-map-column {
   flex: 1 1 50%;
   min-width: 250px;
 }
 
-.oprcml-details-column {
+.uwtcml-details-column {
   flex: 1 1 50%;
   min-width: 250px;
 }
 
-.oprcml-wayspot-details {
+.uwtcml-wayspot-details {
   background-color: #e4e4e4;
   border-radius: 10px;
   padding: 10px;
@@ -27,70 +27,70 @@ img.oprcml-list-image {
   margin-right: 20px;
 }
 
-.dark .oprcml-wayspot-details {
+.dark .uwtcml-wayspot-details {
   background-color: #444444;
 }
 
-.oprcml-wayspot-title-container {
+.uwtcml-wayspot-title-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 
-.oprcml-wayspot-title-container .oprcml-wd-title {
+.uwtcml-wayspot-title-container .uwtcml-wd-title {
   font-weight: bold;
   /* Adjust margin as needed */
   margin-right: 10px;
 }
 
-.oprcml-status-live {
+.uwtcml-status-live {
   min-width: 35px;
 }
 
-.oprcml-status-retired {
+.uwtcml-status-retired {
   min-width: 60px;
 }
 
-.oprcml-wd-image {
+.uwtcml-wd-image {
   width: 100%;
   border-radius: 10px;
   margin-top: 5px;
   margin-bottom: 5px;
 }
 
-.oprcml-wd-description {
+.uwtcml-wd-description {
   text-align: left;
 }
 
-.oprcml-hidden {
+.uwtcml-hidden {
   display: none;
 }
 
-.oprcml-edits-container {
+.uwtcml-edits-container {
   margin-bottom: 24px;
 }
 
-.oprcml-edits-summary-header {
+.uwtcml-edits-summary-header {
   font-weight: bold;
 }
 
-.oprcml-edit-summary-table {
+.uwtcml-edit-summary-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.oprcml-edit-summary-table td:first-child {
+.uwtcml-edit-summary-table td:first-child {
   width: 100px;
   border: none;
 }
 
-.oprcml-edit-summary-table td:last-child {
+.uwtcml-edit-summary-table td:last-child {
   width: 95px;
   text-align: right;
   border: none;
 }
 
-.oprcml-satmap {
+.uwtcml-satmap {
   margin-top: 10px;
   border-radius: 10px;
   overflow: "hidden";

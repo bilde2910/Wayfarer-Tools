@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, register } from "src/core";
@@ -120,7 +120,7 @@ export default () => {
     id: "keyboard-review",
     name: "Keyboard Review",
     authors: ["tehstone", "bilde2910"],
-    description: "Add keyboard review to OPR",
+    description: "Add keyboard review to Wayfarer",
     defaultConfig: {
       autoScrollCards: true,
     },
@@ -205,8 +205,8 @@ export default () => {
           for (let i = 0; i < boxes.length; i++) {
             const btnKey = (i + 4).toString();
             const label = drawNew("span");
-            label.classList.add("oprkr2-key-label");
-            label.classList.add(`oprkr2-data-key-${btnKey}`);
+            label.classList.add("uwtkr2-key-label");
+            label.classList.add(`uwtkr2-data-key-${btnKey}`);
             label.textContent = `[${btnKey}]`;
             if (boxes[i].classList.contains("mat-radio-label-content")) {
               const textNode = boxes[i].querySelector("div");
@@ -223,14 +223,14 @@ export default () => {
         const findKeyBtnInCard = (key: string) => {
           if (context.type !== RenderContextType.NEW) throw new InvalidContextError();
           return document.querySelector<HTMLElement>(
-            `#${context.cards[context.currentCard].id} .oprkr2-eds-key-bracket-${key}`,
+            `#${context.cards[context.currentCard].id} .uwtkr2-eds-key-bracket-${key}`,
           );
         };
         const clickThumbCardBox = (key: string) => {
           if (context.type !== RenderContextType.NEW) throw new InvalidContextError();
           if (!context.type) return;
           const btn = document.querySelector<HTMLElement>(
-            `#${context.cards[context.currentCard].id} .oprkr2-data-key-${key}`,
+            `#${context.cards[context.currentCard].id} .uwtkr2-data-key-${key}`,
           );
           if (btn) btn.closest("label")!.click();
         };
@@ -296,7 +296,7 @@ export default () => {
                     default: continue;
                   }
                   const label = drawNew("span");
-                  label.classList.add("oprkr2-key-label");
+                  label.classList.add("uwtkr2-key-label");
                   label.textContent = `[\u{1f879}${btnKey}] `;
                   const textNode = btn.querySelector(".mat-radio-label-content > div");
                   textNode!.insertBefore(label, textNode!.firstChild);
@@ -431,24 +431,24 @@ export default () => {
                   const dupImgBox = card.querySelector("#check-duplicates-card nia-map ~ * div.overflow-x-auto");
                   const dupeHelp = drawNew("p");
                   const dhK1 = document.createElement("span");
-                  dhK1.classList.add("oprkr2-key-span");
+                  dhK1.classList.add("uwtkr2-key-span");
                   dhK1.textContent = "[Alt]+[";
                   const dhK2 = document.createElement("span");
-                  dhK2.classList.add("oprkr2-key-span");
-                  dhK2.classList.add("oprkr2-key-span-wildcard");
+                  dhK2.classList.add("uwtkr2-key-span");
+                  dhK2.classList.add("uwtkr2-key-span-wildcard");
                   dhK2.textContent = "letter";
                   const dhK3 = document.createElement("span");
-                  dhK3.classList.add("oprkr2-key-span");
+                  dhK3.classList.add("uwtkr2-key-span");
                   dhK3.textContent = "]";
                   const dhK4 = document.createElement("span");
-                  dhK4.classList.add("oprkr2-key-span");
+                  dhK4.classList.add("uwtkr2-key-span");
                   dhK4.textContent = "[Alt]+[Shift]+[";
                   const dhK5 = document.createElement("span");
-                  dhK5.classList.add("oprkr2-key-span");
-                  dhK5.classList.add("oprkr2-key-span-wildcard");
+                  dhK5.classList.add("uwtkr2-key-span");
+                  dhK5.classList.add("uwtkr2-key-span-wildcard");
                   dhK5.textContent = "letter";
                   const dhK6 = document.createElement("span");
-                  dhK6.classList.add("oprkr2-key-span");
+                  dhK6.classList.add("uwtkr2-key-span");
                   dhK6.textContent = "]";
                   dupeHelp.appendChild(document.createTextNode("Press "));
                   dupeHelp.appendChild(dhK1);
@@ -463,7 +463,7 @@ export default () => {
 
                   for (let i = 0; i < dupImgs.length && i < 26; i++) {
                     const dpbox = drawNew("div");
-                    dpbox.classList.add("oprkr2-dupe-key-box");
+                    dpbox.classList.add("uwtkr2-dupe-key-box");
                     dupImgs[i].parentNode!.insertBefore(dpbox, dupImgs[i]);
                     const inner = document.createElement("div");
                     inner.textContent = String.fromCharCode(65 + i);
@@ -556,7 +556,7 @@ export default () => {
                 if (catBox) {
                   const catHelp = drawNew("p");
                   const noAllKey = document.createElement("span");
-                  noAllKey.classList.add("oprkr2-key-span");
+                  noAllKey.classList.add("uwtkr2-key-span");
                   noAllKey.textContent = "[Tab]";
                   catHelp.appendChild(document.createTextNode("Press "));
                   catHelp.appendChild(noAllKey);
@@ -575,7 +575,7 @@ export default () => {
                 };
                 const toggleYN = (key: string) => {
                   setAllNo(false);
-                  const label = document.querySelector(`#categorization-card .oprkr2-eds-key-bracket-${key}`);
+                  const label = document.querySelector(`#categorization-card .uwtkr2-eds-key-bracket-${key}`);
                   const opts = label!.closest("mat-button-toggle-group")!.querySelectorAll("mat-button-toggle");
                   for (let i = 0; i < opts.length; i++) {
                     if (!opts[i].classList.contains("mat-button-toggle-checked")) {
@@ -620,12 +620,12 @@ export default () => {
 
       const initForEdit = (candidate: EditReview) => {
         const drawTextEdit = (card: HTMLElement) => {
-          if (!card.classList.contains("oprkr2-card")) card.classList.add("oprkr2-card");
+          if (!card.classList.contains("uwtkr2-card")) card.classList.add("uwtkr2-card");
           const btns = card.querySelectorAll("mat-radio-button");
           for (let i = 0; i < btns.length && i < 9; i++) {
             const btnKey = (i + 1).toString();
             const label = drawNew("span");
-            label.classList.add("oprkr2-key-label");
+            label.classList.add("uwtkr2-key-label");
             label.textContent = `[${btnKey}] `;
             const textNode = btns[i].querySelector(".mat-radio-label-content");
             textNode!.insertBefore(label, textNode!.firstChild);
@@ -755,24 +755,24 @@ export default () => {
             const photoHelp = drawNew("p");
             photoHelp.style.marginTop = "10px";
             const phK1 = document.createElement("span");
-            phK1.classList.add("oprkr2-key-span");
+            phK1.classList.add("uwtkr2-key-span");
             phK1.textContent = "[";
             const phK2 = document.createElement("span");
-            phK2.classList.add("oprkr2-key-span");
-            phK2.classList.add("oprkr2-key-span-wildcard");
+            phK2.classList.add("uwtkr2-key-span");
+            phK2.classList.add("uwtkr2-key-span-wildcard");
             phK2.textContent = "letter";
             const phK3 = document.createElement("span");
-            phK3.classList.add("oprkr2-key-span");
+            phK3.classList.add("uwtkr2-key-span");
             phK3.textContent = "]";
             const phK4 = document.createElement("span");
-            phK4.classList.add("oprkr2-key-span");
+            phK4.classList.add("uwtkr2-key-span");
             phK4.textContent = "[Shift]+[";
             const phK5 = document.createElement("span");
-            phK5.classList.add("oprkr2-key-span");
-            phK5.classList.add("oprkr2-key-span-wildcard");
+            phK5.classList.add("uwtkr2-key-span");
+            phK5.classList.add("uwtkr2-key-span-wildcard");
             phK5.textContent = "letter";
             const phK6 = document.createElement("span");
-            phK6.classList.add("oprkr2-key-span");
+            phK6.classList.add("uwtkr2-key-span");
             phK6.textContent = "]";
             photoHelp.appendChild(document.createTextNode("Press "));
             photoHelp.appendChild(phK1);
@@ -788,14 +788,14 @@ export default () => {
             for (let i = 0; i < context.cards.length; i++) {
               const actions = context.cards[i].querySelector(".photo-card__actions");
               const label = drawNew("span");
-              label.classList.add("oprkr2-key-label");
-              label.classList.add("oprkr2-photo-card-label");
+              label.classList.add("uwtkr2-key-label");
+              label.classList.add("uwtkr2-photo-card-label");
               label.textContent = String.fromCharCode(65 + i);
               actions!.insertBefore(label, actions!.firstChild);
             }
 
             const label = drawNew("span");
-            label.classList.add("oprkr2-key-label");
+            label.classList.add("uwtkr2-key-label");
             label.textContent = "[Tab]";
             const acceptAllText = acceptAll.querySelector("span");
             acceptAllText!.insertBefore(label, acceptAllText!.firstChild);
@@ -821,11 +821,11 @@ export default () => {
         let btn = null;
         logger.info("handleEnterNew");
         if (isDialogOpen() && !isDialogClosing()) {
-          btn = document.getElementById("oprtmr-ssmb-r");
-          if (!btn) btn = document.getElementById("oprtmr-ssmb-d");
+          btn = document.getElementById("uwftmr-ssmb-r");
+          if (!btn) btn = document.getElementById("uwftmr-ssmb-d");
           if (!btn) btn = document.querySelector<HTMLElement>("mat-dialog-container .mat-dialog-actions button.wf-button--primary");
         } else {
-          btn = document.getElementById("oprtmr-ssb-0");
+          btn = document.getElementById("uwftmr-ssb-0");
           if (!btn) btn = document.querySelector<HTMLElement>("app-submit-review-split-button button.wf-button--primary");
         }
         if (btn) btn.click();
@@ -1005,7 +1005,7 @@ export default () => {
 
       const keyLabel = (btnKey: string) => {
         const label = drawNew("span");
-        label.classList.add("oprkr2-key-label");
+        label.classList.add("uwtkr2-key-label");
         logger.info(keySequence, btnKey);
         if (btnKey.includes(",")) {
           if (keySequence && `+${btnKey}`.startsWith(keySequence)) {
@@ -1022,36 +1022,36 @@ export default () => {
       };
 
       const redrawUI = () => {
-        const ephemeral = document.getElementsByClassName("oprkr2-ephemeral");
+        const ephemeral = document.getElementsByClassName("uwtkr2-ephemeral");
         for (let i = ephemeral.length - 1; i >= 0; i--) {
           ephemeral[i].parentNode!.removeChild(ephemeral[i]);
         }
-        const touched = document.getElementsByClassName("oprkr2-touched");
+        const touched = document.getElementsByClassName("uwtkr2-touched");
         for (let i = touched.length - 1; i >= 0; i--) {
           for (let j = touched[i].classList.length - 1; j >= 0; j--) {
-            if (touched[i].classList[j].startsWith("oprkr2-eds-")) {
+            if (touched[i].classList[j].startsWith("uwtkr2-eds-")) {
               touched[i].classList.remove(touched[i].classList[j]);
             }
           }
-          touched[i].classList.remove("oprkr2-touched");
+          touched[i].classList.remove("uwtkr2-touched");
         }
         if (context.draw) context.draw();
       };
 
       const restyle = (e: Element, ...clss: string[]) => {
-        if (!e.classList.contains("oprkr2-touched")) {
-          e.classList.add("oprkr2-touched");
+        if (!e.classList.contains("uwtkr2-touched")) {
+          e.classList.add("uwtkr2-touched");
         }
         for (const cls of clss) {
-          if (!e.classList.contains(`oprkr2-eds-${cls}`)) {
-            e.classList.add(`oprkr2-eds-${cls}`);
+          if (!e.classList.contains(`uwtkr2-eds-${cls}`)) {
+            e.classList.add(`uwtkr2-eds-${cls}`);
           }
         }
       };
 
       const drawNew = (tag: string) => {
         const e = document.createElement(tag);
-        e.classList.add("oprkr2-ephemeral");
+        e.classList.add("uwtkr2-ephemeral");
         return e;
       };
 

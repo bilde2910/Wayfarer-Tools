@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, NumericInputEditor, register } from "src/core";
@@ -29,7 +29,7 @@ export default () => {
     id: "review-timer",
     name: "Review Timer",
     authors: ["tehstone", "bilde2910"],
-    description: "Add review timer to OPR. Also adds an optional Smart Submit function that delays your submissions to prevent getting cooldowns.",
+    description: "Add a review timer to Wayfarer. Also adds an optional Smart Submit function that delays your submissions to prevent getting cooldowns.",
     defaultConfig: {
       smartSubmit: false,
       minDelay: 20,
@@ -61,17 +61,17 @@ export default () => {
         submitButtonClicked = false;
         expireTime = candidate.expires;
         const container = await untilTruthy(() => document.querySelector("wf-logo")?.parentElement?.parentElement);
-        let counter = document.getElementById("oprtmr-counter");
+        let counter = document.getElementById("uwftmr-counter");
         if (counter === null) {
           const div = document.createElement("div");
-          div.id = "oprtmr-outer";
-          div.classList.add("oprtmr-div");
+          div.id = "uwftmr-outer";
+          div.classList.add("uwftmr-div");
           const countLabel = document.createElement("p");
-          countLabel.id = "oprtmr-counter-label";
+          countLabel.id = "uwftmr-counter-label";
           countLabel.textContent = "Time remaining:";
           counter = document.createElement("p");
-          counter.id = "oprtmr-counter";
-          counter.classList.add("oprtmr-counter");
+          counter.id = "uwftmr-counter";
+          counter.classList.add("uwftmr-counter");
           div.appendChild(countLabel);
           div.appendChild(counter);
           container.appendChild(div);
@@ -94,7 +94,7 @@ export default () => {
           clearInterval(rejectModalCheckTimer);
           rejectModalCheckTimer = 0;
         }
-        const timer = document.getElementById("oprtmr-outer");
+        const timer = document.getElementById("uwftmr-outer");
         if (timer !== null) timer.remove();
       };
 
@@ -118,16 +118,16 @@ export default () => {
 
         const smartSubmitEnabled = config.get("smartSubmit");
         for (let i = 0; i < buttons.length; i++) {
-          let ssButton = document.getElementById(`oprtmr-ssb-${i}`) as HTMLButtonElement;
+          let ssButton = document.getElementById(`uwftmr-ssb-${i}`) as HTMLButtonElement;
           if (!smartSubmitEnabled) {
             if (ssButton !== null) ssButton.style.display = "none";
             return;
           }
           if (ssButton === null) {
             ssButton = document.createElement("button");
-            ssButton.classList.add("wf-button", "wf-split-button__main", "oprtmr-ssb");
+            ssButton.classList.add("wf-button", "wf-split-button__main", "uwftmr-ssb");
             ssButton.disabled = true;
-            ssButton.id = `oprtmr-ssb-${i}`;
+            ssButton.id = `uwftmr-ssb-${i}`;
             ssButton.textContent = "Smart Submit";
             ssButton.addEventListener("click", () => checkSubmitReview());
           }
@@ -147,7 +147,7 @@ export default () => {
           if (!rejectModal || rejectModal.childElementCount < 1) return;
 
           const isDupModal = rejectModal.children[0].tagName === "APP-CONFIRM-DUPLICATE-MODAL";
-          const buttonId = `oprtmr-ssmb-${isDupModal ? "d" : "r"}`;
+          const buttonId = `uwftmr-ssmb-${isDupModal ? "d" : "r"}`;
           const parent = document.getElementsByClassName("mat-dialog-actions");
           const selectionRequired = [
             "APP-APPROPRIATE-REJECTION-FLOW-MODAL",
@@ -157,7 +157,7 @@ export default () => {
           if (ssButton === null) {
             const buttons = parent[0].getElementsByTagName("button");
             ssButton = document.createElement("button");
-            ssButton.classList.add("wf-button", "wf-split-button__main", "wf-button--primary", "oprtmr-ssb");
+            ssButton.classList.add("wf-button", "wf-split-button__main", "wf-button--primary", "uwftmr-ssb");
             ssButton.style.marginLeft = "1.5rem";
             ssButton.id = buttonId;
             ssButton.textContent = "Smart Submit";
@@ -182,7 +182,7 @@ export default () => {
           for (const mutation of mutations) {
             if (mutation.type === "attributes" && mutation.attributeName == "disabled") {
               for (let i = 0; i < buttonWrapper.length; i++) {
-                const smartButton = document.getElementById(`oprtmr-ssb-${i}`) as HTMLButtonElement;
+                const smartButton = document.getElementById(`uwftmr-ssb-${i}`) as HTMLButtonElement;
                 toggleButtonClasses(smartButton, button);
               }
             }
@@ -253,30 +253,30 @@ export default () => {
       const updateButtonText = (message: string, timeRemaining: number) => {
         let button;
         for (let i = 0; i < 5; i++) {
-          button = document.getElementById(`oprtmr-ssb-${i}`);
+          button = document.getElementById(`uwftmr-ssb-${i}`);
           if (button === null) break;
           button.textContent = message;
         }
-        button = document.getElementById("oprtmr-ssmb-r");
+        button = document.getElementById("uwftmr-ssmb-r");
         if (button !== null) button.textContent = message;
-        button = document.getElementById("oprtmr-ssmb-d");
+        button = document.getElementById("uwftmr-ssmb-d");
         if (button !== null) button.textContent = message;
 
-        const timerText = document.getElementById("oprtmr-counter");
+        const timerText = document.getElementById("uwftmr-counter");
         timerText!.style.display = "none";
 
-        let counter = document.getElementById("oprtmr-subcounter");
+        let counter = document.getElementById("uwftmr-subcounter");
         if (counter === null) {
           counter = document.createElement("p");
           counter.textContent = timeRemaining.toString();
-          counter.id = "oprtmr-subcounter";
-          counter.classList.add("oprtmr-counter");
+          counter.id = "uwftmr-subcounter";
+          counter.classList.add("uwftmr-counter");
           timerText!.parentNode!.appendChild(counter);
         } else {
           counter.textContent = timeRemaining.toString();
         }
 
-        const counterLabel = document.getElementById("oprtmr-counter-label");
+        const counterLabel = document.getElementById("uwftmr-counter-label");
         counterLabel!.textContent = "Submitting in:";
         counterLabel!.style.fontWeight = "bold";
       };

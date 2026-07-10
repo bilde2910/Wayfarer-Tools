@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -49,15 +49,15 @@ export default () => {
       const updateTimer = async (result?: SubmissionsResult) => {
         const container = await untilTruthy(() => document.querySelector("wf-logo")?.parentElement?.parentElement);
         const now = Date.now();
-        let counter = document.getElementById("oprtat-counter");
-        let label = document.getElementById("oprtat-label");
+        let counter = document.getElementById("uwftat-counter");
+        let label = document.getElementById("uwftat-label");
         if (counter === null) {
           const div = makeChildNode(container, "div");
-          div.classList.add("oprtat-outer");
+          div.classList.add("uwftat-outer");
           label = makeChildNode(div, "p", result?.canAppeal ? AVAILABLE_LABEL : UNAVAILABLE_LABEL);
-          label.id = "oprtat-label";
+          label.id = "uwftat-label";
           counter = makeChildNode(div, "p", "Loading…");
-          counter.id = "oprtat-counter";
+          counter.id = "uwftat-counter";
         }
         {
           using idb = await toolbox.openIDB("appeals", "readonly");

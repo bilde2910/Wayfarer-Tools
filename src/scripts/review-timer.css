@@ -1,4 +1,4 @@
-.oprtmr-div {
+.uwftmr-div {
   color: #333;
   margin-left: 2em;
   padding-top: 0.3em;
@@ -6,15 +6,15 @@
   display: block;
 }
 
-.dark .oprtmr-div {
+.dark .uwftmr-div {
   color: #ddd;
 }
 
-.oprtmr-counter {
+.uwftmr-counter {
   font-size: 20px;
   color: #20B8E3;
 }
 
-.oprtmr-sbb {
+.uwftmr-sbb {
   color: #20B8E3;
 }

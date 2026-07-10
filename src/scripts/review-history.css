@@ -1,15 +1,15 @@
-.oprrh-idb {
+.uwtrh-idb {
   color: #333;
   padding-top: 0.3em;
   text-align: center;
   display: block;
 }
 
-.dark .oprrh-idb {
+.dark .uwtrh-idb {
   color: #ddd;
 }
 
-.oprrh-idb button {
+.uwtrh-idb button {
   background-color: #e5e5e5;
   border: none;
   color: #ff4713;
@@ -21,12 +21,12 @@
   font-size: 14px;
 }
 
-.dark .oprrh-idb button {
+.dark .uwtrh-idb button {
   background-color: #404040;
   color: #20B8E3;
 }
 
-.oprrh-table {
+.uwtrh-table {
   display: none;
   height: 500px;
 }

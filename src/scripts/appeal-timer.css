@@ -1,4 +1,4 @@
-.oprtat-outer {
+.uwftat-outer {
   color: #333;
   margin: 0 2em;
   padding-top: 0.3em;
@@ -6,11 +6,11 @@
   display: block;
 }
 
-.dark .oprtat-outer {
+.dark .uwftat-outer {
   color: #ddd;
 }
 
-.oprtat-outer p:nth-child(2) {
+.uwftat-outer p:nth-child(2) {
   font-size: 20px;
   color: #20B8E3;
 }

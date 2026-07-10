@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, NotificationColor, register } from "src/core";
@@ -374,7 +374,7 @@ export default () => {
 
         ref.addEventListener("click", async (e) => {
           // Ensure there is only one selection box.
-          const elements = document.querySelectorAll(".oprnsh-dropdown");
+          const elements = document.querySelectorAll(".uwtnsh-dropdown");
           for (const e of elements) e.remove();
           const item = (e.target! as HTMLElement).closest("app-submissions-list-item");
           if (item !== null) {
@@ -384,17 +384,17 @@ export default () => {
             if (nomId) {
               const dsRef = await untilTruthy(() => document.querySelector(CONTRIB_DATE_SELECTOR));
               const box = makeChildNode(dsRef.parentNode!, "div");
-              box.classList.add("oprnsh-dropdown");
+              box.classList.add("uwtnsh-dropdown");
 
               const leftBox = makeChildNode(box, "a", RIGHT_TRIANGLE);
-              leftBox.classList.add("oprnsh-dd-left");
+              leftBox.classList.add("uwtnsh-dd-left");
               const rightBox = makeChildNode(box, "div");
-              rightBox.classList.add("oprnsh-dd-right");
+              rightBox.classList.add("uwtnsh-dd-right");
 
               const collapsedLine = makeChildNode(rightBox, "p");
-              collapsedLine.classList.add("oprnsh-collapsed");
+              collapsedLine.classList.add("uwtnsh-collapsed");
               const expandedBox = makeChildNode(rightBox, "div");
-              expandedBox.classList.add("oprnsh-expanded");
+              expandedBox.classList.add("uwtnsh-expanded");
 
               let collapsed = true;
               box.addEventListener("click", (ev) => {
@@ -436,7 +436,7 @@ export default () => {
 
       const importEmails = async (submissions: AnyContribution[]) => {
         logger.info("Starting to process stored emails for history events");
-        const emailAPI = await toolbox.getAddonAPI("opr-tools-core")!.email();
+        const emailAPI = await toolbox.getAddonAPI("uwt-core")!.email();
         const start = Date.now();
         const epInstance = new EmailProcessor(submissions);
         await epInstance.prepare();
@@ -488,22 +488,22 @@ export default () => {
           statusText = STATE_MAP[current.status] ?? "Unknown";
         }
 
-        // Format the date as UTC as this is what OPR uses to display the nomination date.
+        // Format the date as UTC as this is what Wayfarer uses to display the nomination date.
         // Maybe make this configurable to user's local time later?
         const prefix = `${toUtcIsoDate(new Date(current.timestamp))} - `;
 
-        const collapsedLine = box.querySelector(".oprnsh-collapsed")!;
+        const collapsedLine = box.querySelector(".uwtnsh-collapsed")!;
         collapsedLine.textContent = prefix + statusText;
         const line = document.createElement("p");
         line.appendChild(document.createTextNode(prefix));
-        if (current.verified) collapsedLine.classList.add("oprnsh-verified");
-        else if (collapsedLine.classList.contains("oprnsh-verified")) collapsedLine.classList.remove("oprnsh-verified");
+        if (current.verified) collapsedLine.classList.add("uwtnsh-verified");
+        else if (collapsedLine.classList.contains("uwtnsh-verified")) collapsedLine.classList.remove("uwtnsh-verified");
 
         if (typeof current.email !== "undefined") {
           const aDisplay = makeChildNode(line, "a", statusText);
           aDisplay.addEventListener("click", async (e) => {
             e.stopPropagation();
-            const emailAPI = await toolbox.getAddonAPI("opr-tools-core")!.email();
+            const emailAPI = await toolbox.getAddonAPI("uwt-core")!.email();
             const email = await emailAPI.get(current.email!);
             email.display();
           });
@@ -511,8 +511,8 @@ export default () => {
           line.appendChild(document.createTextNode(statusText));
         }
 
-        if (current.verified) line.classList.add("oprnsh-verified");
-        const expandedBox = box.querySelector(".oprnsh-expanded")!;
+        if (current.verified) line.classList.add("uwtnsh-verified");
+        const expandedBox = box.querySelector(".uwtnsh-expanded")!;
         expandedBox.appendChild(line);
       };
 
@@ -698,7 +698,7 @@ export default () => {
         });
         idb.commit();
 
-        const box = document.querySelector(".oprnsh-dropdown");
+        const box = document.querySelector(".uwtnsh-dropdown");
         if (box) {
           addEventToHistoryDisplay(box, newEntry, oldStatus);
         }
@@ -983,8 +983,8 @@ class ImageQuery {
     const datePrev = toUtcIsoDate(shiftDays(date, -1));
     const dates = [datePrev, dateCur, dateNext];
     const candidates = submissions.filter(e => dates.includes(e.day) && e.poiData.title.trim() == match.groups!.title);
-    if (!candidates.length) throw new NominationMatchingError(`Unable to find a photo that matches the Wayspot title "${match.groups!.title}" and submission date ${dateCur} on this OPR account.`);
-    if (candidates.length > 1) throw new NominationMatchingError(`Multiple photos on this OPR account match the Wayspot title "${match.groups!.title}" and submission date ${dateCur} specified in the email.`);
+    if (!candidates.length) throw new NominationMatchingError(`Unable to find a photo that matches the Wayspot title "${match.groups!.title}" and submission date ${dateCur} on this Wayfarer account.`);
+    if (candidates.length > 1) throw new NominationMatchingError(`Multiple photos on this Wayfarer account match the Wayspot title "${match.groups!.title}" and submission date ${dateCur} specified in the email.`);
     return candidates[0].imageUrl;
   };
   static ingPhoto1 = () => (doc: Document) => {
@@ -1007,14 +1007,14 @@ class ImageQuery {
     }
     if (!dateMatch || month === null) return;
     const date = `${dateMatch.groups!.year}-${month.toString().padStart(2, "0")}-${dateMatch.groups!.day.padStart(2, "0")}`;
-    // OPR is in UTC, but emails are in local time. Work around this by also matching against
+    // Wayfarer is in UTC, but emails are in local time. Work around this by also matching against
     // the preceding and following dates from the one specified in the email.
     const dateNext = toUtcIsoDate(shiftDays(new Date(date), 1));
     const datePrev = toUtcIsoDate(shiftDays(new Date(date), -1));
     const dates = [datePrev, date, dateNext];
     const candidates = submissions.filter(e => dates.includes(e.day) && e.poiData.title.trim() === title && e.status === status);
-    if (!candidates.length) throw new NominationMatchingError(`Unable to find a photo that matches the Wayspot title "${title}" and submission date ${date} on this OPR account.`);
-    if (candidates.length > 1) throw new NominationMatchingError(`Multiple photos on this OPR account match the Wayspot title "${title}" and submission date ${date} specified in the email.`);
+    if (!candidates.length) throw new NominationMatchingError(`Unable to find a photo that matches the Wayspot title "${title}" and submission date ${date} on this Wayfarer account.`);
+    if (candidates.length > 1) throw new NominationMatchingError(`Multiple photos on this Wayfarer account match the Wayspot title "${title}" and submission date ${date} specified in the email.`);
     return candidates[0].imageUrl;
   };
   static pgoPhotoDecided1 = (status: ContributionStatus, titleRegex: RegExp, dateRegex: RegExp, monthNames: string[][]) => (doc: Document, submissions: EditContribution<ContributionType.PHOTO>[]) => {
@@ -1035,14 +1035,14 @@ class ImageQuery {
     }
     if (!dateMatch || month === null) return;
     const date = `${dateMatch.groups!.year}-${month.toString().padStart(2, "0")}-${dateMatch.groups!.day.padStart(2, "0")}`;
-    // OPR is in UTC, but emails are in local time. Work around this by also matching against
+    // Wayfarer is in UTC, but emails are in local time. Work around this by also matching against
     // the preceding and following dates from the one specified in the email.
     const dateNext = toUtcIsoDate(shiftDays(new Date(date), 1));
     const datePrev = toUtcIsoDate(shiftDays(new Date(date), -1));
     const dates = [datePrev, date, dateNext];
     const candidates = submissions.filter(e => dates.includes(e.day) && e.poiData.title.trim() === titleMatch.groups!.title && e.status === status);
-    if (!candidates.length) throw new NominationMatchingError(`Unable to find a photo that matches the Wayspot title "${titleMatch.groups!.title}" and submission date ${date} on this OPR account.`);
-    if (candidates.length > 1) throw new NominationMatchingError(`Multiple photos on this OPR account match the Wayspot title "${titleMatch.groups!.title}" and submission date ${date} specified in the email.`);
+    if (!candidates.length) throw new NominationMatchingError(`Unable to find a photo that matches the Wayspot title "${titleMatch.groups!.title}" and submission date ${date} on this Wayfarer account.`);
+    if (candidates.length > 1) throw new NominationMatchingError(`Multiple photos on this Wayfarer account match the Wayspot title "${titleMatch.groups!.title}" and submission date ${date} specified in the email.`);
     return candidates[0].imageUrl;
   };
   static pgoPhotoTextUrl = () => (doc: Document) => {
@@ -1115,8 +1115,8 @@ const processEmail = (logger: Logger, email: WayfarerEmail, submissions: AnyCont
     if (!SUPPORTED_EMAIL_TYPES.includes(emlClass.type) || emlClass.style === EmailStyle.LIGHTSHIP) {
       returnStatus = EmailProcessingResult.SKIPPED;
       reason = (
-        "This email is either for a type of contribution that is not trackable in OPR, " +
-        "or for content that is unrelated to OPR."
+        "This email is either for a type of contribution that is not trackable in Wayfarer, " +
+        "or for content that is unrelated to Wayfarer."
       );
     } else {
       const doc = email.getDocument();
@@ -1261,7 +1261,7 @@ const processNominationEmail = (
   if (!nom) {
     throw new NominationMatchingError(
       "The nomination that this email refers to cannot be found " +
-      `on this OPR account (failed to match LH3 URL ${url}).`,
+      `on this Wayfarer account (failed to match LH3 URL ${url}).`,
     );
   }
   return nom;
@@ -1293,7 +1293,7 @@ const processPhotoEmail = (
   if (!nom) {
     throw new NominationMatchingError(
       "The photo submission that this email refers to cannot be found " +
-      `on this OPR account (failed to match LH3 URL ${url}).`,
+      `on this Wayfarer account (failed to match LH3 URL ${url}).`,
     );
   }
   return nom;

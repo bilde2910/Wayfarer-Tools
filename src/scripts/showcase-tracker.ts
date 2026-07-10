@@ -1,5 +1,5 @@
 // Copyright 2025 bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -141,15 +141,15 @@ export default () => {
       };
 
       const renderShowcaseLabel = (item: AppSubmissionsListItemElement, showcase?: StoredShowcasedPortal) => {
-        // Remove oprsct-star class if already present
-        const starTags = item.querySelectorAll(".oprsct-star");
+        // Remove uwtsct-star class if already present
+        const starTags = item.querySelectorAll(".uwtsct-star");
         for (let i = starTags.length - 1; i >= 0; i--) starTags[i].remove();
         if (typeof showcase === "undefined") return;
         // Add a new star
         const nominationTagSet = item.querySelector("app-submission-tag-set");
         if (nominationTagSet) {
           const newTag = makeChildNode(nominationTagSet, "app-submission-tag");
-          newTag.classList.add("mr-1", "oprsct-star");
+          newTag.classList.add("mr-1", "uwtsct-star");
           newTag.title = `Seen on showcase on ${toUtcIsoDate(new Date(showcase._scAt))}`;
           const newTagContent = makeChildNode(newTag, "div", "\u2b50");
           newTagContent.classList.add("submission-tag", "ng-star-inserted");

@@ -1,5 +1,5 @@
 // Copyright 2025 Tntnnbltn, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, register } from "src/core";
@@ -124,7 +124,7 @@ export default () => {
         const imageElements = item.querySelectorAll("img");
         if (imageElements.length > 1) {
           const selectedImage = imageElements[1];
-          selectedImage.classList.add("oprcml-list-image");
+          selectedImage.classList.add("uwtcml-list-image");
           if (data.type === "PHOTO") {
             selectedImage.src = data.imageUrl;
           }
@@ -132,15 +132,15 @@ export default () => {
       };
 
       const updateRejectionLabels = (item: AppSubmissionsListItemElement, data: AnyEditContribution) => {
-        // Remove oprcml-overturned class if already present
-        const overturnedTags = item.querySelectorAll(".oprcml-overturned");
+        // Remove uwtcml-overturned class if already present
+        const overturnedTags = item.querySelectorAll(".uwtcml-overturned");
         for (let i = overturnedTags.length - 1; i >= 0; i--) overturnedTags[i].remove();
         // If the current Wayspot data matches the rejected edit data, mark it as "overturned".
         if (wasOverturned(data)) {
           const nominationTagSet = item.querySelector("app-submission-tag-set");
           if (nominationTagSet) {
             const newTag = makeChildNode(nominationTagSet, "app-submission-tag");
-            newTag.classList.add("mr-1", "oprcml-overturned");
+            newTag.classList.add("mr-1", "uwtcml-overturned");
             const newTagContent = makeChildNode(newTag, "div");
             newTagContent.classList.add("submission-tag", "ng-star-inserted");
             const newSpan = makeChildNode(newTagContent, "span", "Overturned");
@@ -152,40 +152,40 @@ export default () => {
       const interceptDetailsPane = async (data: AnyContribution, nominations: AnyContribution[]) => {
         await addCoordinates(data);
 
-        const containers = document.querySelectorAll(".oprcml-details-container");
+        const containers = document.querySelectorAll(".uwtcml-details-container");
         for (let i = containers.length - 1; i >= 0; i--) containers[i].remove();
-        const summaries = document.querySelectorAll(".oprcml-edits-summary");
+        const summaries = document.querySelectorAll(".uwtcml-edits-summary");
         for (let i = summaries.length - 1; i >= 0; i--) summaries[i].remove();
         const detailsSections = document.querySelectorAll(".details-pane__section");
 
         // Unhide things that may have been hidden on the Edits page
-        const hiddenItems = document.querySelectorAll(".oprcml-hidden");
+        const hiddenItems = document.querySelectorAll(".uwtcml-hidden");
         for (let i = hiddenItems.length - 1; i >= 0; i--) {
-          hiddenItems[i].classList.remove(".oprcml-hidden");
+          hiddenItems[i].classList.remove(".uwtcml-hidden");
         }
 
         if (data.type === ContributionType.NOMINATION) return;
 
         const detailsContainer = document.createElement("div");
-        detailsContainer.classList.add("oprcml-details-container");
+        detailsContainer.classList.add("uwtcml-details-container");
         let mapDiv: HTMLElement | null = null;
         let infoboxDiv: HTMLElement | null = null;
 
         if (config.get("showCurrentWayspotInfobox")) {
           infoboxDiv = makeChildNode(detailsContainer, "div");
-          infoboxDiv.classList.add("oprcml-details-column");
+          infoboxDiv.classList.add("uwtcml-details-column");
           mapDiv = makeChildNode(detailsContainer, "div", "Location");
-          mapDiv.classList.add("oprcml-map-column");
+          mapDiv.classList.add("uwtcml-map-column");
 
           makeChildNode(infoboxDiv, "div", "Current Wayspot Details");
           const wayspotDetails = makeChildNode(infoboxDiv, "div");
-          wayspotDetails.classList.add("oprcml-wayspot-details");
+          wayspotDetails.classList.add("uwtcml-wayspot-details");
 
           // Title
           const titleContainer = makeChildNode(wayspotDetails, "div");
-          titleContainer.classList.add("oprcml-wayspot-title-container");
+          titleContainer.classList.add("uwtcml-wayspot-title-container");
           const title = makeChildNode(titleContainer, "div", data.poiData.title);
-          title.classList.add("oprcml-wd-title");
+          title.classList.add("uwtcml-wd-title");
 
           // Status
           const statusContainer = makeChildNode(titleContainer, "div");
@@ -196,22 +196,22 @@ export default () => {
           if (data.poiData.state === "LIVE") {
             const statusSpan = makeChildNode(statusTag, "span", "Live");
             statusSpan.classList.add("submission-tag--accepted", "ng-star-inserted");
-            statusContainer.classList.add("oprcml-status-live");
+            statusContainer.classList.add("uwtcml-status-live");
           } else if (data.poiData.state === "RETIRED") {
             const statusSpan = makeChildNode(statusTag, "span", "Retired");
             statusSpan.classList.add("submission-tag--rejected", "ng-star-inserted");
-            statusContainer.classList.add("oprcml-status-retired");
+            statusContainer.classList.add("uwtcml-status-retired");
             statusContainer.title = `Wayspot retired on ${data.poiData.lastUpdateDate}`;
           }
 
           // Image
           const image = makeChildNode(wayspotDetails, "img") as HTMLImageElement;
-          image.classList.add("oprcml-wd-image");
+          image.classList.add("uwtcml-wd-image");
           image.src = data.poiData.imageUrl;
 
           // Description
           const description = makeChildNode(wayspotDetails, "div", data.poiData.description || "<No Description>");
-          description.classList.add("oprcml-wd-description");
+          description.classList.add("uwtcml-wd-description");
 
           image.addEventListener("click", () => {
             window.open(`${data.poiData.imageUrl}=s0`, "_blank");
@@ -221,15 +221,15 @@ export default () => {
             // Hide the "Current Wayspot" data
             if (data.type === ContributionType.PHOTO) {
               const elementsToHide = detailsSections[0].querySelectorAll(":scope > *:nth-child(-n+2)");
-              for (const element of elementsToHide) element.classList.add("oprcml-hidden");
+              for (const element of elementsToHide) element.classList.add("uwtcml-hidden");
             } else {
-              detailsSections[0].children[0].classList.add("oprcml-hidden");
+              detailsSections[0].children[0].classList.add("uwtcml-hidden");
             }
           }
           if (detailsSections.length >= 2) {
             // For the static map
             const elementsToHide = detailsSections[1].querySelectorAll(":scope > *:nth-child(-n+2");
-            for (const element of elementsToHide) element.classList.add("oprcml-hidden");
+            for (const element of elementsToHide) element.classList.add("uwtcml-hidden");
           }
         }
 
@@ -247,7 +247,7 @@ export default () => {
 
           // Create container for all edit tables
           const editsSummaryContainer = document.createElement("div");
-          editsSummaryContainer.classList.add("oprcml-edits-summary");
+          editsSummaryContainer.classList.add("uwtcml-edits-summary");
 
           // Check if there are edits for each type and insert containers accordingly
           const editTypes: { type: EditContributionType, label: string }[] = [
@@ -266,9 +266,9 @@ export default () => {
           for (const editType of editTypes) {
             if (wayspotEdits.some(edit => edit.type === editType.type)) {
               const editsContainer = makeChildNode(editsSummaryContainer, "div");
-              editsContainer.classList.add("oprcml-edits-container");
+              editsContainer.classList.add("uwtcml-edits-container");
               const editsHeader = makeChildNode(editsContainer, "div", editType.label);
-              editsHeader.classList.add("oprcml-edits-summary-header");
+              editsHeader.classList.add("uwtcml-edits-summary-header");
 
               const edits = wayspotEdits.filter(n => n.type === editType.type);
               const editsTable = generateEditSummaryTable(edits, editType.type);
@@ -329,7 +329,7 @@ const generateEditSummaryTable = (edits: AnyEditContribution[], type: EditContri
   edits.sort((a, b) => b.order - a.order);
 
   const table = document.createElement("table");
-  table.classList.add("oprcml-edit-summary-table");
+  table.classList.add("uwtcml-edit-summary-table");
 
   // Populate table with edit data
   for (const edit of edits) {
@@ -354,11 +354,11 @@ const generateEditSummaryTable = (edits: AnyEditContribution[], type: EditContri
 const addSatMap = async (selected: AnyEditContribution, mapDiv: HTMLElement, infoboxDiv: HTMLElement) => {
   await untilTruthy(() => typeof google !== "undefined");
 
-  let svMapElement = document.getElementById("oprt-nomination-satmap");
+  let svMapElement = document.getElementById("uwft-nomination-satmap");
   if (!svMapElement) {
     svMapElement = makeChildNode(mapDiv, "div");
-    svMapElement.classList.add("oprcml-satmap");
-    svMapElement.id = "oprt-nomination-satmap";
+    svMapElement.classList.add("uwtcml-satmap");
+    svMapElement.id = "uwft-nomination-satmap";
 
     // Create an image element to track the image's loading status
     // This helps make sure that the map window is the right height

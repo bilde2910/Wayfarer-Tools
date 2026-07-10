@@ -31,7 +31,7 @@ const suffix = getCliArg("suffix", "");
 /**
  * Path to the GitHub repo in the format "User/Repo"
  */
-const repo = "bilde2910/OPR-Tools";
+const repo = "bilde2910/Wayfarer-Tools";
 
 /**
  * Name of the emitted userscript file
@@ -50,7 +50,7 @@ export const baseUrl = (() => {
   case "github":
     return `https://raw.githubusercontent.com/${repo}/${branch}`;
   case "varden":
-    return "https://static.varden.info/opr-tools";
+    return "https://static.varden.info/wayfarer-tools";
   case "dev":
   default:
     return "http://localhost:8710";
@@ -192,7 +192,7 @@ export async function makeUserscriptHeader() {
 // @author            ${pkg.author.name}
 // @copyright         ${pkg.author.name} (${pkg.author.url})
 // @icon              ${getResourceUrl("images/logo_48.png", buildNbr)}
-// @match             https://opr.ingress.com/*
+// @match             https://wayfarer.nianticlabs.com/*
 // @downloadURL       ${scriptUrl}
 // @updateURL         ${metaUrl}
 // @grant             GM.getResourceUrl

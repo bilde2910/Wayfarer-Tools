@@ -105,13 +105,13 @@ export class EmailAPI {
     if (!SUPPORTED_SENDERS.includes(emailAddress)) {
       return "ignored";
       /*throw new UnsupportedSenderError(
-        `Sender ${emailAddress} was not recognized as a valid Niantic Wayfarer or OPR-related email address.`,
+        `Sender ${emailAddress} was not recognized as a valid Wayfarer-related email address.`,
       );*/
     }
     const emailDate = new Date(email.getFirstHeaderValue("Date"));
     const scopelySplitDate = new Date(1748023200000);
     if (emailAddress === "hello@pokemongolive.com" && emailDate.getUTCFullYear() <= 2018) {
-      // Newsletters used this email address for some time up until late 2018, which was before this game got Wayfarer/OPR access.
+      // Newsletters used this email address for some time up until late 2018, which was before this game got Wayfarer access.
       return "ignored";
     }
     if (emailAddress !== "notices@recon.nianticspatial.com" && emailDate > scopelySplitDate) {
@@ -194,10 +194,10 @@ export class EmailAPI {
 
   /**
    * Niantic will often strip diacritic marks from Portal titles/descriptions when they are sent in
-   * emails to end users. This can make title matching difficult, because the OPR website does not
-   * strip diacritics. Strings passed to this function will be returned with their diacritic marks
+   * emails to end users. This can make title matching difficult, because the Wayfarer website does
+   * not strip diacritics. Strings passed to this function will be returned with their diacritic marks
    * removed, to emulate the process applied by Niantic's email system. This can make it easier to
-   * match OPR-sourced wayspot data against data sourced from imported emails.
+   * match Wayfarer-sourced wayspot data against data sourced from imported emails.
    * @param text The Portal title/description to strip
    * @returns A normalized string representation of the given text
    */

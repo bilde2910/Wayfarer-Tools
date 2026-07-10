@@ -3,7 +3,7 @@ import { untilTruthy, makeChildNode } from "src/utils";
 import { UserSettings } from "src/types";
 import { StoredEmail } from "src/email/types";
 
-import "./opr-tools-core.css";
+import "./uwt-core.css";
 import { EmailAPI } from "src/email";
 
 export interface CorePluginAPI {
@@ -16,11 +16,11 @@ interface IdbStores {
 
 export default () => {
   register<IdbStores, CorePluginAPI>()({
-    id: "opr-tools-core",
-    name: "OPR Tools Core",
+    id: "uwt-core",
+    name: "Unified Wayfarer Tools Core",
     authors: ["bilde2910"],
-    description: "OPR Tools plugin loader and core utilities",
-    url: "https://github.com/bilde2910/OPR-Tools",
+    description: "Unified Wayfarer Tools plugin loader and core utilities",
+    url: "https://github.com/bilde2910/Wayfarer-Tools",
     defaultConfig: {
       activePlugins: <string[]>[],
     },
@@ -30,13 +30,13 @@ export default () => {
         const ref = await untilTruthy(() => document.querySelector("app-settings"));
         const box = document.createElement("div");
         box.classList.add("max-w-md");
-        const mainSettings = document.getElementById("oprtoolsMainPluginSettingsPane");
+        const mainSettings = document.getElementById("uwftoolsMainPluginSettingsPane");
         if (mainSettings) {
           ref.insertBefore(box, mainSettings);
         } else {
           ref.appendChild(box);
         }
-        const header = makeChildNode(box, "h3", "OPR Tools");
+        const header = makeChildNode(box, "h3", "Unified Wayfarer Tools");
         header.classList.add("wf-page-header");
         const activeAddonsBox = makeChildNode(box, "div");
         activeAddonsBox.classList.add("settings__item");
@@ -49,19 +49,19 @@ export default () => {
         const refreshReminder = makeChildNode(activeAddonsBody, "p",
           "Please refresh the page for changes in active addons to take effect.",
         );
-        refreshReminder.classList.add("oprtcore-refresh-reminder");
+        refreshReminder.classList.add("uwftcore-refresh-reminder");
 
         for (const addon of toolbox.listAvailableAddons().sort((a, b) => a.name.localeCompare(b.name))) {
           const addonRow = makeChildNode(activeAddonsBody, "div");
-          addonRow.classList.add("oprtcore-plugin");
+          addonRow.classList.add("uwftcore-plugin");
           const titleRow = makeChildNode(addonRow, "p");
-          titleRow.classList.add("oprtcore-plugin-title");
+          titleRow.classList.add("uwftcore-plugin-title");
           const label = makeChildNode(titleRow, "label");
-          label.classList.add("oprtcore-checkbox");
+          label.classList.add("uwftcore-checkbox");
           const checkbox = makeChildNode(label, "input");
           checkbox.setAttribute("type", "checkbox");
           makeChildNode(label, "span", addon.name);
-          if (addon.id === "opr-tools-core") {
+          if (addon.id === "uwt-core") {
             checkbox.setAttribute("checked", "checked");
             checkbox.setAttribute("disabled", "disabled");
           } else {
@@ -78,9 +78,9 @@ export default () => {
           }
 
           makeChildNode(addonRow, "p", `Authors: ${addon.authors.join(", ")}`)
-            .classList.add("oprtcore-authors");
+            .classList.add("uwftcore-authors");
           makeChildNode(addonRow, "p", addon.description)
-            .classList.add("oprtcore-description");
+            .classList.add("uwftcore-description");
         }
       };
 

@@ -1,8 +1,8 @@
 {
-  "name": "opr-tools",
-  "userscriptName": "OPR Tools",
+  "name": "wayfarer-tools",
+  "userscriptName": "Unified Wayfarer Tools",
   "version": "0.0.0-dev",
-  "description": "Unofficial addons that add extra quality of life features to Niantic Spatial's project OPR.",
+  "description": "Unofficial addons that add extra quality of life features to Scopely's project Wayfarer.",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -23,7 +23,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bilde2910/OPR-Tools.git"
+    "url": "git+https://github.com/bilde2910/Wayfarer-Tools.git"
   },
   "author": {
     "name": "bilde2910",
@@ -31,9 +31,9 @@
   },
   "license": "GPL-3.0-only",
   "bugs": {
-    "url": "https://github.com/bilde2910/OPR-Tools/issues"
+    "url": "https://github.com/bilde2910/Wayfarer-Tools/issues"
   },
-  "homepage": "https://github.com/bilde2910/OPR-Tools#readme",
+  "homepage": "https://github.com/bilde2910/Wayfarer-Tools#readme",
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.39.1",

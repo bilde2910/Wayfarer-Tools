@@ -1,5 +1,5 @@
 // Copyright 2025 bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -32,7 +32,7 @@ export default () => {
     initialize: (toolbox, logger, _config) => {
       const updateView = (ref: Element) => {
         ref.closest("mat-sidenav-content > .max-w-7xl")?.classList.remove("max-w-7xl");
-        ref.classList.add("oprwsr-root-new");
+        ref.classList.add("uwtwsr-root-new");
         logger.info("ref", ref);
         console.log(ref.querySelectorAll("div"));
         const columns = [...ref.children].filter(node => node.tagName === "DIV").map(node => node);
@@ -69,7 +69,7 @@ export default () => {
         for (const question of c2.querySelectorAll("app-question-card")) {
           c3.appendChild(question);
           const thumbsRow = document.createElement("div");
-          thumbsRow.classList.add("oprwsr-thumbs-row");
+          thumbsRow.classList.add("uwtwsr-thumbs-row");
           question.querySelector(".action-buttons-row")!.insertAdjacentElement("afterbegin", thumbsRow);
           for (const thumb of question.querySelectorAll(".thumbs-button")) {
             thumbsRow.appendChild(thumb);

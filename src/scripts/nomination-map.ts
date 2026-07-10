@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910, Tntnnbltn
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, NumericInputEditor, register } from "src/core";
@@ -81,7 +81,7 @@ export default () => {
           const count = listEl.__ngContext__[3][26].length;
           countText = document.createElement("div");
           countText.textContent = `Count: ${count}`;
-          countText.classList.add("oprnm-text");
+          countText.classList.add("uwtnm-text");
           insDiv.insertBefore(countText, insDiv.children[0]);
         }, 1000);
       };
@@ -128,23 +128,23 @@ export default () => {
 
       const createElements = () => {
         const container = document.createElement("div");
-        container.classList.add("oprnm-wrap-collapsible");
+        container.classList.add("uwtnm-wrap-collapsible");
 
         const collapsibleInput = document.createElement("input");
-        collapsibleInput.id = "oprnm-collapsed-map";
-        collapsibleInput.classList.add("oprnm-toggle");
+        collapsibleInput.id = "uwtnm-collapsed-map";
+        collapsibleInput.classList.add("uwtnm-toggle");
         collapsibleInput.type = "checkbox";
 
         const collapsibleLabel = document.createElement("label");
-        collapsibleLabel.classList.add("oprnm-lbl-toggle");
+        collapsibleLabel.classList.add("uwtnm-lbl-toggle");
         collapsibleLabel.textContent = "View Nomination Map";
-        collapsibleLabel.setAttribute("for", "oprnm-collapsed-map");
+        collapsibleLabel.setAttribute("for", "uwtnm-collapsed-map");
 
         const collapsibleContent = document.createElement("div");
-        collapsibleContent.classList.add("oprnm-collapsible-content");
+        collapsibleContent.classList.add("uwtnm-collapsible-content");
 
         const mapElement = document.createElement("div");
-        mapElement.classList.add("oprnm-map");
+        mapElement.classList.add("uwtnm-map");
         mapElement.textContent = "Loading...";
 
         collapsibleContent.appendChild(mapElement);
@@ -167,7 +167,7 @@ export default () => {
           countText.textContent = `Count: ${count}`;
           updateMap(true);
         }
-        window.dispatchEvent(new Event("OPRNM_MapFilterChange"));
+        window.dispatchEvent(new Event("uwtNM_MapFilterChange"));
       };
 
       const updateMap = (reset: boolean) => {

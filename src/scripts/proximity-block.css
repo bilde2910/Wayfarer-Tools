@@ -1,22 +1,22 @@
-.oprtpb-blocked-hidden {
+.uwftpb-blocked-hidden {
   display: none;
 }
 
-.oprtpb-header {
+.uwftpb-header {
   font-weight: bold;
 }
 
-.oprtpb-table {
+.uwftpb-table {
   width: 100%;
   border-collapse: collapse;
 }
 
-.oprtpb-table td:first-child {
+.uwftpb-table td:first-child {
   width: 100px;
   border: none;
 }
 
-.oprtpb-table td:last-child {
+.uwftpb-table td:last-child {
   width: 95px;
   text-align: right;
   border: none;

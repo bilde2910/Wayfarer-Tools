@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -21,7 +21,7 @@ import { iterObject, makeChildNode, shiftDays, toUtcIsoDate } from "src/utils";
 
 import GASImportIcon from "../../assets/gmail-gas-importer/ga-script.svg";
 import GASUserManual from "../../assets/gmail-gas-importer/user-manual.html";
-import GASContent from "../../assets/gmail-gas-importer/opr-importer.gs";
+import GASContent from "../../assets/gmail-gas-importer/uwt-importer.gs";
 import "./gmail-gas-importer.css";
 
 const DEFAULT_CONFIG = {
@@ -89,12 +89,12 @@ export default () => {
     id: "gmail-gas-importer",
     name: "Gmail Importer",
     authors: ["tehstone", "bilde2910"],
-    description: "Adds the capability to import emails from Gmail into OPR to enrich other plugins through usage of a Google Apps Script",
+    description: "Adds the capability to import emails from Gmail into Wayfarer to enrich other plugins through usage of a Google Apps Script",
     defaultConfig: DEFAULT_CONFIG,
     sessionData: {},
     initialize: (toolbox, logger, config) => {
       const createEmailLoader = async (title: string, body: string): Promise<EmailLoader> => {
-        const modal = await toolbox.createModal("opremli-modal");
+        const modal = await toolbox.createModal("uwtemli-modal");
         const header = makeChildNode(modal.container, "h2", title);
         const status = makeChildNode(modal.container, "p", body);
         return {
@@ -118,7 +118,7 @@ export default () => {
       };
 
       const showImportModal = async () => {
-        const modal = await toolbox.createModal("oprtcore-modal-common", "opregas-options-modal");
+        const modal = await toolbox.createModal("uwftcore-modal-common", "uwtegas-options-modal");
         makeChildNode(modal.container, "h1", "Import using Google Apps Script");
         const helpText = makeChildNode(modal.container, "p");
         makeChildNode(helpText, "span", "Please enter your Importer Script details below. New to the Importer Script? ");
@@ -126,7 +126,7 @@ export default () => {
         makeChildNode(helpText, "span", " for detailed setup instructions.");
         const form = makeChildNode(modal.container, "form");
         const tbl = makeChildNode(form, "table");
-        tbl.classList.add("opregas-table");
+        tbl.classList.add("uwtegas-table");
 
         const inputs: FormInput[] = [
           {
@@ -163,12 +163,12 @@ export default () => {
 
         const btn1 = makeChildNode(form, "input") as HTMLInputElement;
         btn1.type = "submit";
-        btn1.classList.add("oprtcore-ui-button");
+        btn1.classList.add("uwftcore-ui-button");
         btn1.value = "Start import";
 
         const btn2 = makeChildNode(form, "input") as HTMLInputElement;
         btn2.type = "button";
-        btn2.classList.add("oprtcore-ui-button", "opregas-cancel-btn");
+        btn2.classList.add("uwftcore-ui-button", "uwtegas-cancel-btn");
         btn2.value = "Cancel import";
         btn2.addEventListener("click", () => modal.dismiss());
 
@@ -215,7 +215,7 @@ export default () => {
       };
 
       const importEmails = async () => {
-        const emailAPI = await toolbox.getAddonAPI("opr-tools-core")!.email();
+        const emailAPI = await toolbox.getAddonAPI("uwt-core")!.email();
         const loader = await createEmailLoader("Connecting...", "Validating script credentials");
         const url = config.get("url");
         const token = config.get("token");

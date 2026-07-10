@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, Tntnnbltn, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -27,7 +27,7 @@ export default () => {
     id: "nomination-stats",
     name: "Nomination Stats",
     authors: ["tehstone", "Thtnnbltn", "bilde2910"],
-    description: "Add extended OPR Profile stats",
+    description: "Add extended Wayfarer Profile stats",
     defaultConfig: {},
     sessionData: {},
     initialize: (toolbox, _logger, _config) => {
@@ -110,7 +110,7 @@ const addNominationDetails = async (subs: AnyContribution[]) => {
     }
   }
 
-  let html = "<table class='oprns-stats-table'>";
+  let html = "<table class='uwtns-stats-table'>";
   html += "<colgroup>";
   html += "<col style='width: 20%;'>".repeat(4);
   html += "</colgroup>";
@@ -144,21 +144,21 @@ const addNominationDetails = async (subs: AnyContribution[]) => {
   html += "</table>";
 
   const statsContainer = document.createElement("div");
-  statsContainer.setAttribute("class", "oprtns-wrap-collabsible");
+  statsContainer.setAttribute("class", "uwftns-wrap-collabsible");
   statsContainer.id = "nomStats";
 
   const collapsibleInput = document.createElement("input");
-  collapsibleInput.id = "oprtns-collapsed-stats";
-  collapsibleInput.setAttribute("class", "oprtns-toggle");
+  collapsibleInput.id = "uwftns-collapsed-stats";
+  collapsibleInput.setAttribute("class", "uwftns-toggle");
   collapsibleInput.type = "checkbox";
 
   const collapsibleLabel = document.createElement("label");
-  collapsibleLabel.setAttribute("class", "oprtns-lbl-toggle-ns");
+  collapsibleLabel.setAttribute("class", "uwftns-lbl-toggle-ns");
   collapsibleLabel.innerText = "View Nomination Stats";
-  collapsibleLabel.setAttribute("for", "oprtns-collapsed-stats");
+  collapsibleLabel.setAttribute("for", "uwftns-collapsed-stats");
 
   const collapsibleContent = document.createElement("div");
-  collapsibleContent.setAttribute("class", "oprtns-collapsible-content");
+  collapsibleContent.setAttribute("class", "uwftns-collapsible-content");
   collapsibleContent.innerHTML = html;
 
   statsContainer.appendChild(collapsibleInput);
@@ -171,15 +171,15 @@ const addNominationDetails = async (subs: AnyContribution[]) => {
 
 const addExportButtons = async (subs: AnyContribution[]) => {
   const ref = await untilTruthy(() => document.querySelector("wf-logo"));
-  if (document.getElementById("oprtns-export") !== null) return;
+  if (document.getElementById("uwftns-export") !== null) return;
   const div = makeChildNode(ref.parentElement!.parentElement!, "div");
-  div.id = "oprtns-export";
+  div.id = "uwftns-export";
   const exportButton = makeChildNode(div, "button", "Export JSON");
   exportButton.addEventListener("click", () => exportNominationsJson(subs));
-  exportButton.classList.add("oprtcore-ui-button");
+  exportButton.classList.add("uwftcore-ui-button");
   const exportCsvButton = makeChildNode(div, "button", "Export CSV");
   exportCsvButton.addEventListener("click", () => exportNominationsCsv(subs));
-  exportCsvButton.classList.add("oprtcore-ui-button");
+  exportCsvButton.classList.add("uwftcore-ui-button");
 };
 
 const exportNominationsJson = (subs: AnyContribution[]) => {

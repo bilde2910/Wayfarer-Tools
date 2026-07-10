@@ -2,7 +2,7 @@ import { scriptInfo } from "./constants";
 import { initializeAllAddons, initializeUserHash } from "./core";
 import { domLoaded, Logger } from "./utils";
 
-import oprToolsCore from "./scripts/opr-tools-core";
+import uwfToolsCore from "./scripts/uwt-core";
 import nominationStats from "./scripts/nomination-stats";
 import nominationMap from "./scripts/nomination-map";
 import reviewHistory from "./scripts/review-history";
@@ -14,7 +14,6 @@ import nominationStatusHistory from "./scripts/nomination-status-history";
 import reviewMapMods from "./scripts/review-map-mods";
 import reviewCounter from "./scripts/review-counter";
 import emlImporter from "./scripts/eml-importer";
-import wayfarerContributionImporter from "./scripts/wayfarer-contribution-importer";
 import gmailGasImporter from "./scripts/gmail-gas-importer";
 import appealTimer from "./scripts/appeal-timer";
 import contributionManagementLayout from "./scripts/contribution-management-layout";
@@ -27,7 +26,7 @@ import proximityBlock from "./scripts/proximity-block";
 import showcaseTracker from "./scripts/showcase-tracker";
 
 const availableAddons = [
-  oprToolsCore,
+  uwfToolsCore,
   nominationStats,
   nominationMap,
   reviewHistory,
@@ -49,8 +48,6 @@ const availableAddons = [
   betterDiff,
   proximityBlock,
   showcaseTracker,
-  // Uses filterSend, must be loaded last
-  wayfarerContributionImporter,
 ];
 
 /** Runs when the userscript is loaded initially */
@@ -65,7 +62,7 @@ function run() {
   try {
     logger.info(`Initializing ${scriptInfo.name} v${scriptInfo.version}...`);
     initializeUserHash().then((userHash: number) => {
-      logger.info(`Initializing OPR Tools for user hash ${userHash}`);
+      logger.info(`Initializing Wayfarer Tools for user hash ${userHash}`);
       for (const addon of availableAddons) addon();
       logger.info("Addons registered.");
       initializeAllAddons();

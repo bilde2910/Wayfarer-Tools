@@ -1,5 +1,5 @@
 // Copyright 2025 bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register, SelectBoxEditor, TextInputEditor } from "src/core";
@@ -185,9 +185,9 @@ export default () => {
         }
       };
 
-      const checkUpdates = (oprData: AnyContribution[], trData: ParsedTotalReconEntry[]) => {
+      const checkUpdates = (uwtData: AnyContribution[], trData: ParsedTotalReconEntry[]) => {
         const updates: EntryUpdate[] = [];
-        const nominations = oprData.filter(n => n.type === ContributionType.NOMINATION);
+        const nominations = uwtData.filter(n => n.type === ContributionType.NOMINATION);
         for (const nomination of nominations) {
           let entry = findExactMatch(nomination, trData);
           if (typeof entry !== "undefined") {

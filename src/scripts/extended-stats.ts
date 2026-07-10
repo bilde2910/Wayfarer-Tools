@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -27,7 +27,7 @@ export default () => {
     id: "extended-stats",
     name: "Extended Stats",
     authors: ["tehstone", "bilde2910"],
-    description: "Add extended OPR Profile stats",
+    description: "Add extended Wayfarer Profile stats",
     defaultConfig: {
       bonusUpgrades: 0,
       offsetAgreements: 0,
@@ -42,15 +42,15 @@ export default () => {
         const otherAgreements = allAgreements - profile.accepted - profile.rejected - profile.duplicated;
 
         const totalParent = document.createElement("div");
-        totalParent.classList.add("oprtes-parent");
-        makeChildNode(totalParent, "div", "Processed & Agreement").classList.add("oprtes-text");
-        makeChildNode(totalParent, "div", `${allAgreements} (${percent}%)`).classList.add("oprtes-count");
+        totalParent.classList.add("uwftes-parent");
+        makeChildNode(totalParent, "div", "Processed & Agreement").classList.add("uwftes-text");
+        makeChildNode(totalParent, "div", `${allAgreements} (${percent}%)`).classList.add("uwftes-count");
         insertAfter(parentRef, totalParent);
 
         const otherParent = document.createElement("div");
-        otherParent.classList.add("oprtes-parent");
-        makeChildNode(otherParent, "div", "Other Agreements").classList.add("oprtes-text");
-        makeChildNode(otherParent, "div", otherAgreements.toString()).classList.add("oprtes-count");
+        otherParent.classList.add("uwftes-parent");
+        makeChildNode(otherParent, "div", "Other Agreements").classList.add("uwftes-text");
+        makeChildNode(otherParent, "div", otherAgreements.toString()).classList.add("uwftes-count");
         insertAfter(parentRef.parentElement!.lastChild!, otherParent);
       };
 

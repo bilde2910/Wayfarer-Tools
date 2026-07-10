@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, register, SelectBoxEditor } from "src/core";
@@ -35,7 +35,7 @@ export default () => {
     id: "review-map-mods",
     name: "Review Map Mods",
     authors: ["tehstone", "bilde2910"],
-    description: "Add map mods to OPR Review Page",
+    description: "Add map mods to the Wayfarer Review Page",
     defaultConfig: {
       display: "map" as MapType,
       renderCloseCircle: true,
@@ -197,7 +197,7 @@ export default () => {
             pano.setVisible(true);
           } catch {
             const warningBox = document.createElement("p");
-            warningBox.classList.add("oprrmm-warning-box");
+            warningBox.classList.add("uwtrmm-warning-box");
             warningBox.textContent = "No Street View found within a close radius";
             ref.parentElement!.insertBefore(warningBox, ref);
           }

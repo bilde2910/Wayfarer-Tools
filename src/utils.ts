@@ -323,18 +323,18 @@ export class Logger {
   }
 
   debug(...data: any) {
-    //console.debug("[D]", "[opr-tools]", `[${this.#subsystem}]`, ...data);
+    //console.debug("[D]", "[unified-wf-tools]", `[${this.#subsystem}]`, ...data);
   }
 
   info(...data: any) {
-    console.log("[I]", "[opr-tools]", `[${this.#subsystem}]`, ...data);
+    console.log("[I]", "[unified-wf-tools]", `[${this.#subsystem}]`, ...data);
   };
 
   warn(...data: any) {
-    console.warn("[W]", "[opr-tools]", `[${this.#subsystem}]`, ...data);
+    console.warn("[W]", "[unified-wf-tools]", `[${this.#subsystem}]`, ...data);
   };
 
   error(...data: any) {
-    console.error("[E]", "[opr-tools]", `[${this.#subsystem}]`, ...data);
+    console.error("[E]", "[unified-wf-tools]", `[${this.#subsystem}]`, ...data);
   };
 }

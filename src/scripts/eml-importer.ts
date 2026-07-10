@@ -1,5 +1,5 @@
 // Copyright 2025 tehstone, bilde2910
-// This file is part of the OPR Tools collection.
+// This file is part of the Unified Wayfarer Tools collection.
 
 // This script is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -13,7 +13,7 @@
 
 // You can find a copy of the GNU General Public License in the root
 // directory of this script's GitHub repository:
-// <https://github.com/bilde2910/OPR-Tools/blob/main/LICENSE>
+// <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "src/core";
@@ -27,12 +27,12 @@ export default () => {
     id: "eml-importer",
     name: "EML Email Importer",
     authors: ["tehstone", "bilde2910"],
-    description: "Adds the capability to import emails to OPR to enrich other plugins, such as Nomination Status History",
+    description: "Adds the capability to import emails to Wayfarer to enrich other plugins, such as Nomination Status History",
     defaultConfig: {},
     sessionData: {},
     initialize: (toolbox, _logger, _config) => {
       const createEmailLoader = async (title: string, body: string) => {
-        const modal = await toolbox.createModal("opremli-modal");
+        const modal = await toolbox.createModal("uwtemli-modal");
         const header = makeChildNode(modal.container, "h2", title);
         const status = makeChildNode(modal.container, "p", body);
         return {
@@ -43,7 +43,7 @@ export default () => {
       };
 
       const importEmails = async () => {
-        const emailAPI = await toolbox.getAddonAPI("opr-tools-core")!.email();
+        const emailAPI = await toolbox.getAddonAPI("uwt-core")!.email();
         const files = await readFiles("message/rfc822", "*.eml");
         const loader = await createEmailLoader("Importing...", "Please wait");
         const iterator = async function*() {
