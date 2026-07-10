@@ -156,7 +156,7 @@ export default () => {
       };
 
       const addRHButtons = async () => {
-        const ref = await untilTruthy(() => document.querySelector("wf-rating-bar"));
+        const ref = await untilTruthy(() => document.querySelector("wf-credibility-card"));
         const outer = makeChildNode(ref.parentElement!, "div");
         outer.classList.add("uwtrh-idb");
 
@@ -273,7 +273,7 @@ export default () => {
           else if (review.type === "PHOTO") rhPhotos.push(review);
         }
 
-        const ratingNarRef = await untilTruthy(() => document.querySelector("wf-rating-bar"));
+        const ratingNarRef = await untilTruthy(() => document.querySelector("wf-credibility-card"));
         const parent = ratingNarRef.parentNode!.parentNode!;
         const searchBox = document.createElement("input");
         searchBox.classList.add("uwftcore-fix", "uwftcore-ui-large-input");
