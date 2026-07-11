@@ -3,7 +3,7 @@
 // @version      0.1.0
 // @description  Helper script for the Unified Wayfarer Tools
 // @namespace    https://github.com/bilde2910/Wayfarer-Tools
-// @downloadURL  https://github.com/bilde2910/Wayfarer-Tools/raw/main/helpers/uwt-helpshift-helper.js
+// @downloadURL  https://github.com/bilde2910/Wayfarer-Tools/raw/refs/heads/main/helpers/uwt-helpshift-helper.user.js
 // @homepageURL  https://github.com/bilde2910/Wayfarer-Tools
 // @match        https://webchat.helpshift.com/*
 // ==/UserScript==
