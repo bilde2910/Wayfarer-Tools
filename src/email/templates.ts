@@ -72,48 +72,6 @@ const TEMPLATES: AnyEmailTemplate[] = [
   },
   //  ---------------------------------------- ENGLISH [en] ----------------------------------------
   {
-    subject: /^Thanks! Niantic Spatial Wayspot nomination received for/,
-    type: Type.NOMINATION_RECEIVED,
-    style: Style.RECON,
-    language: "en",
-  },
-  {
-    subject: /^Thanks! Niantic Spatial Wayspot edit suggestion received for/,
-    type: Type.EDIT_RECEIVED,
-    style: Style.RECON,
-    language: "en",
-  },
-  {
-    subject: /^Niantic Spatial Wayspot edit suggestion decided for/,
-    type: Type.EDIT_DECIDED,
-    style: Style.RECON,
-    language: "en",
-  },
-  {
-    subject: /^Thanks! Niantic Spatial Wayspot Photo received for/,
-    type: Type.PHOTO_RECEIVED,
-    style: Style.RECON,
-    language: "en",
-  },
-  {
-    subject: /^Thanks! Niantic Spatial Wayspot location edit appeal received for/,
-    type: Type.EDIT_APPEAL_RECEIVED,
-    style: Style.RECON,
-    language: "en",
-  },
-  {
-    subject: /^Thanks! Niantic Spatial location report received for/,
-    type: Type.REPORT_RECEIVED,
-    style: Style.RECON,
-    language: "en",
-  },
-  {
-    subject: /^Niantic Spatial location report decided for/,
-    type: Type.REPORT_DECIDED,
-    style: Style.RECON,
-    language: "en",
-  },
-  {
     subject: /^Thanks! Niantic Wayspot nomination received for/,
     type: Type.NOMINATION_RECEIVED,
     style: Style.WAYFARER,

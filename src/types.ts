@@ -74,7 +74,7 @@ export interface SubmissionsResult {
   immediateUpgradeEnabled: boolean,
 }
 
-export interface ShowcasedPortal {
+export interface ShowcasedWayspot {
   guid: string,
   title: string,
   description: string,
@@ -97,7 +97,7 @@ export interface ShowcasedPortal {
 }
 
 export interface Showcase {
-  showcase: ShowcasedPortal[],
+  showcase: ShowcasedWayspot[],
   notifications: never[], // TODO
   punishmentWarn: boolean,
   showcaseMessage: string,

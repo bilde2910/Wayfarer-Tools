@@ -9,7 +9,6 @@ import emailTemplates, { EmailTemplate } from "./templates";
 type IDBConnectionFactory = (mode: "readonly" | "readwrite") => Promise<IDBStoreConnection<StoredEmail>>;
 
 const SUPPORTED_SENDERS: string[] = [
-  "notices@recon.nianticspatial.com",
   "notices@wayfarer.nianticlabs.com",
   "nominations@portals.ingress.com",
   "hello@pokemongolive.com",
@@ -109,13 +108,8 @@ export class EmailAPI {
       );*/
     }
     const emailDate = new Date(email.getFirstHeaderValue("Date"));
-    const scopelySplitDate = new Date(1748023200000);
     if (emailAddress === "hello@pokemongolive.com" && emailDate.getUTCFullYear() <= 2018) {
       // Newsletters used this email address for some time up until late 2018, which was before this game got Wayfarer access.
-      return "ignored";
-    }
-    if (emailAddress !== "notices@recon.nianticspatial.com" && emailDate > scopelySplitDate) {
-      // Ignore any emails post-Scopely split
       return "ignored";
     }
     const toSave: StoredEmail = {
@@ -193,12 +187,12 @@ export class EmailAPI {
   }
 
   /**
-   * Niantic will often strip diacritic marks from Portal titles/descriptions when they are sent in
+   * Niantic will often strip diacritic marks from Wayspot titles/descriptions when they are sent in
    * emails to end users. This can make title matching difficult, because the Wayfarer website does
    * not strip diacritics. Strings passed to this function will be returned with their diacritic marks
    * removed, to emulate the process applied by Niantic's email system. This can make it easier to
    * match Wayfarer-sourced wayspot data against data sourced from imported emails.
-   * @param text The Portal title/description to strip
+   * @param text The Wayspot title/description to strip
    * @returns A normalized string representation of the given text
    */
   static stripDiacritics(text: string) {

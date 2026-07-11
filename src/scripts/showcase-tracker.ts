@@ -18,7 +18,7 @@
 
 import { register } from "../core";
 import { deepEquals, makeChildNode, toUtcIsoDate, untilTruthy } from "../utils";
-import { ContributionType, Showcase, ShowcasedPortal } from "../types";
+import { ContributionType, Showcase, ShowcasedWayspot } from "../types";
 
 import "./showcase-tracker.css";
 
@@ -28,7 +28,7 @@ import { AppSubmissionsListItemElement } from "../unsafe";
 interface StoredShowcase {
   id: number,
   storedAt: number,
-  showcase: ShowcasedPortal[]
+  showcase: ShowcasedWayspot[]
 };
 
 interface IdbStores {
@@ -40,7 +40,7 @@ interface LookupResult {
   latestKey: number,
 }
 
-type StoredShowcasedPortal = ShowcasedPortal & {
+type StoredShowcasedWayspot = ShowcasedWayspot & {
   _scId: number,
   _scAt: number,
 };
@@ -70,7 +70,7 @@ export default () => {
         };
       };
 
-      const storeShowcase = async (id: number, showcase: ShowcasedPortal[]) => {
+      const storeShowcase = async (id: number, showcase: ShowcasedWayspot[]) => {
         using idb = await toolbox.openIDB("showcases", "readwrite");
         idb.put({
           id,
@@ -94,13 +94,13 @@ export default () => {
 
       const detectAppListItems = async () => {
         // Build dataset
-        const allShowcasedPortals: StoredShowcasedPortal[] = [];
+        const allShowcasedWayspots: StoredShowcasedWayspot[] = [];
         {
           using idb = await toolbox.openIDB("showcases", "readonly");
           const showcases = await idb.getAll();
           for (const sc of showcases) {
             for (const n of sc.showcase) {
-              allShowcasedPortals.push({
+              allShowcasedWayspots.push({
                 ...n,
                 _scId: sc.id,
                 _scAt: sc.storedAt,
@@ -112,13 +112,13 @@ export default () => {
         const parentContainer = await untilTruthy(() => document.querySelector(".submissions"));
         // Scan existing elements
         const existingItems = parentContainer.querySelectorAll<AppSubmissionsListItemElement>("app-submissions-list-item");
-        for (const item of existingItems) formatItem(item, allShowcasedPortals);
+        for (const item of existingItems) formatItem(item, allShowcasedWayspots);
         // Set up MutationObserver for new elements
         const observer = new MutationObserver((mutations) => {
           for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
               if (node.nodeName === "APP-SUBMISSIONS-LIST-ITEM") {
-                formatItem(node as AppSubmissionsListItemElement, allShowcasedPortals);
+                formatItem(node as AppSubmissionsListItemElement, allShowcasedWayspots);
               }
             }
           }
@@ -129,18 +129,18 @@ export default () => {
         });
       };
 
-      const formatItem = (item: AppSubmissionsListItemElement, allShowcasedPortals: StoredShowcasedPortal[]) => {
+      const formatItem = (item: AppSubmissionsListItemElement, allShowcasedWayspots: StoredShowcasedWayspot[]) => {
         renderShowcaseLabel(item);
         const data = item.__ngContext__[22];
         if (data.type !== ContributionType.NOMINATION) return;
-        const filtered = allShowcasedPortals.filter(n => n.imageUrl === data.imageUrl);
+        const filtered = allShowcasedWayspots.filter(n => n.imageUrl === data.imageUrl);
         if (filtered.length > 0) {
           renderShowcaseLabel(item, filtered[0]);
           //item.addEventListener("click", () => interceptDetailsPane(data));
         }
       };
 
-      const renderShowcaseLabel = (item: AppSubmissionsListItemElement, showcase?: StoredShowcasedPortal) => {
+      const renderShowcaseLabel = (item: AppSubmissionsListItemElement, showcase?: StoredShowcasedWayspot) => {
         // Remove uwtsct-star class if already present
         const starTags = item.querySelectorAll(".uwtsct-star");
         for (let i = starTags.length - 1; i >= 0; i--) starTags[i].remove();
@@ -162,7 +162,7 @@ export default () => {
   });
 };
 
-const getShowcaseS2Cell = (showcase: ShowcasedPortal[]) => {
+const getShowcaseS2Cell = (showcase: ShowcasedWayspot[]) => {
   const cellSet = new Set<string>();
   for (const n of showcase) {
     const cell = S2.S2Cell.FromLatLng(S2.L.LatLng(n.lat, n.lng), 6).toString();

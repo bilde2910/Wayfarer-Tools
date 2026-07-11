@@ -42,6 +42,5 @@ export enum EmailStyle {
   POKEMON_GO = "POKEMON_GO",
   REDACTED = "REDACTED",
   WAYFARER = "WAYFARER",
-  RECON = "RECON",
   UNKNOWN = "UNKNOWN",
 }

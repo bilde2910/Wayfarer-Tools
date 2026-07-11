@@ -56,7 +56,6 @@ function doPost(e) {
 
 function findEmails({ since, offset, size }) {
   const senders = [
-    "notices@recon.nianticspatial.com",
     "notices@wayfarer.nianticlabs.com",
     "nominations@portals.ingress.com",
     "hello@pokemongolive.com",

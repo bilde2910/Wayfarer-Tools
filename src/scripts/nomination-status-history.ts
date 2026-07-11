@@ -972,21 +972,6 @@ class ImageQuery {
     }
     return candidates[0].imageUrl;
   };
-  static reconPhotoSubmitted = (regex: RegExp) => (doc: Document, submissions: EditContribution<ContributionType.PHOTO>[], email: WayfarerEmail) => {
-    const match = email.getFirstHeaderValue("Subject").match(regex);
-    if (match === null) throw new Error("Unable to extract the name of the Wayspot from this email.");
-    const date = new Date(email.getFirstHeaderValue("Date"));
-    // Wayfarer is in UTC, but emails are in local time. Work around this by also matching against
-    // the preceding and following dates from the one specified in the email.
-    const dateCur = toUtcIsoDate(date);
-    const dateNext = toUtcIsoDate(shiftDays(date, 1));
-    const datePrev = toUtcIsoDate(shiftDays(date, -1));
-    const dates = [datePrev, dateCur, dateNext];
-    const candidates = submissions.filter(e => dates.includes(e.day) && e.poiData.title.trim() == match.groups!.title);
-    if (!candidates.length) throw new NominationMatchingError(`Unable to find a photo that matches the Wayspot title "${match.groups!.title}" and submission date ${dateCur} on this Wayfarer account.`);
-    if (candidates.length > 1) throw new NominationMatchingError(`Multiple photos on this Wayfarer account match the Wayspot title "${match.groups!.title}" and submission date ${dateCur} specified in the email.`);
-    return candidates[0].imageUrl;
-  };
   static ingPhoto1 = () => (doc: Document) => {
     const url = doc.querySelector("h2 ~ p:last-of-type")?.childNodes[2].textContent?.trim();
     if (url?.match(/^https?:\/\/lh3.googleusercontent.com\//)) return url;
@@ -1127,7 +1112,7 @@ const processEmail = (logger: Logger, email: WayfarerEmail, submissions: AnyCont
       let template: TemplateResolver | null = null;
       if (
         (emlClass.type === EmailType.NOMINATION_RECEIVED) &&
-        (emlClass.style === EmailStyle.WAYFARER || emlClass.style === EmailStyle.RECON)
+        (emlClass.style === EmailStyle.WAYFARER)
       ) {
         template = {
           type: emlClass.type,
@@ -1372,17 +1357,6 @@ const EMAIL_PARSERS: ({ subject: RegExp } & TemplateResolver)[] = [
     ],
     image: [
       ImageQuery.imageLh3(),
-    ],
-  },
-  {
-    // Photo received (Recon)
-    subject: /^Thanks! Niantic Spatial Wayspot Photo received for/,
-    type: EmailType.PHOTO_RECEIVED,
-    status: [() => ContributionStatus.NOMINATED],
-    image: [
-      ImageQuery.reconPhotoSubmitted(
-        /^Thanks! Niantic Spatial Wayspot Photo received for (?<title>.*)!$/,
-      ),
     ],
   },
   {
