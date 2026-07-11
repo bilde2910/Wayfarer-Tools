@@ -970,7 +970,7 @@ export default () => {
           "+O": () => thumbDownOpen(ThumbCards.ACCURATE).then(() => checkDialogBox(null, null)),
           "+T": () => thumbDownOpen(ThumbCards.PERMANENT),
           "Q": () => window.open(candidate.imageUrl + "=s0"),
-          "E": () => window.open(candidate.supportingImageUrl + "=s0"),
+          "E": () => window.open(candidate.supportingImageUrls[0] + "=s0"),
           "R": () => zoomMap(1),
           "F": () => zoomMap(-1),
           "W": () => panMapTowards("W", 0, -1),

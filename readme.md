@@ -20,7 +20,6 @@ This repository is still very much a work in progress. The goal is to rework mos
 - [x] wayfarer-nomination-streetview.user.js
 - [ ] wayfarer-nomination-types.user.js
 - [x] wayfarer-open-in.user.js
-- [ ] wayfarer-prime-portal-links.user.js
 - [ ] wayfarer-rejections-plus.user.js
 - [ ] wayfarer-reverse-image-search.user.js
 - [x] wayfarer-review-counter.user.js
@@ -30,12 +29,10 @@ This repository is still very much a work in progress. The goal is to rework mos
 - [ ] wayfarer-review-pings.user.js
 - [x] wayfarer-review-timer.user.js
 - [ ] wayfarer-skip-count.user.js
-- [ ] ~~wayfarer-ticket-saver.user.js~~\*
+- [ ] wayfarer-ticket-saver.user.js
 - [ ] wayfarer-translate.user.js
 - [ ] wayfarer-upgrade-percent.user.js
 - [ ] wayfarer-version-display.user.js
-
-\* Not applicable to Recon
 </details>
 
 ## Prerequisites

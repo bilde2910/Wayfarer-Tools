@@ -57,7 +57,7 @@ const REJECTION_MAP: Record<string, string> = {
 const FLOW_CHANGE_TIME = 1698674400000;
 
 const BASE_COLUMNS = ["type", "id", "title", "description", "lat", "lng"] as const;
-const NEW_COLUMNS = [...BASE_COLUMNS, "imageUrl", "statement", "supportingImageUrl"] as const;
+const NEW_COLUMNS = [...BASE_COLUMNS, "imageUrl", "statement", "supportingImageUrls"] as const;
 const EDIT_COLUMNS = [...BASE_COLUMNS, "descriptionEdits", "titleEdits", "locationEdits"] as const;
 const PHOTO_COLUMNS = [...BASE_COLUMNS, "newPhotos"] as const;
 

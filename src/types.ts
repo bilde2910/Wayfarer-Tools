@@ -20,7 +20,7 @@ export interface DiscordUserLink {
 
 //#region API types
 
-export interface Requests {
+export interface PostBody {
   "/api/v1/vault/review": AnySubmittedReview,
   "/api/v1/vault/manage/hold": SetHold,
   "/api/v1/vault/manage/releasehold": ReleaseHold,
@@ -30,14 +30,23 @@ export interface Requests {
   "/api/v1/vault/settings": SaveSettings,
 }
 
+export interface QueryParams {
+  "/api/v1/vault/messages": MessagesQuery,
+  "/api/v1/vault/mapview/gcs": GcsQuery,
+  "/api/v1/vault/mapview/lowzoom/gcs": GcsQuery,
+}
+
 export interface Responses {
   "GET": {
     "/api/v1/vault/manage": SubmissionsResult,
     "/api/v1/vault/review": AnyReview,
     "/api/v1/vault/home": Showcase,
+    "/api/v1/vault/messages": Record<string, string>,
     "/api/v1/vault/settings": UserSettings,
     "/api/v1/vault/profile": Profile,
     "/api/v1/vault/properties": UserProperties,
+    "/api/v1/vault/mapview/gcs": Gcs<GcsDetailedData>,
+    "/api/v1/vault/mapview/lowzoom/gcs": Gcs<GcsSampleData | GcsNormalData>,
   },
   "POST": {
     "/api/v1/vault/review": string,
@@ -56,11 +65,93 @@ export interface ApiResult<T> {
   result: T,
   message: string | null,
   code: string,
+  fieldErrors: null, // TODO
+  errorDetails: null // TODO
   version: string,
   captcha: boolean,
 }
 
 type DarkMode = "ENABLED" | "DISABLED" | "AUTOMATIC";
+type GmoStatus = "ACTIVE" | "INACTIVE";
+
+interface GcsQuery {
+  ne: string,
+  sw: string,
+  cellLevel: number,
+}
+
+interface MessagesQuery {
+  language: string,
+}
+
+interface PogoGmo {
+  gameBrand: "HOLOHOLO",
+  entity: "GYM" | "POKESTOP" | "POWERSPOT",
+  status: GmoStatus,
+}
+
+interface GcsNormalDataMeta {
+  s2CellLevel: number,
+  s2CellId: string,
+  generatedTimestamp: string,
+  count: number,
+}
+
+interface GcsSampleDataMeta extends GcsNormalDataMeta {
+  format: "SAMPLE",
+}
+
+interface GcsDetailedDataMeta extends GcsNormalDataMeta {
+  format: "DETAILED",
+}
+
+interface GcsSampleDataPoi {
+  poiId: string,
+  latE6: number,
+  lngE6: number,
+  isCommunityContributed: boolean,
+}
+
+interface GcsNormalDataPoi extends GcsSampleDataMeta {
+  title: string,
+  description: string,
+  mainImage: string,
+}
+
+interface GcsDetailedDataPoi extends GcsNormalDataPoi {
+  address: string,
+  categoryTags: never[], // TODO
+  hasAdditionalImages: boolean,
+  gmo: PogoGmo[],
+}
+
+interface GcsSampleData {
+  metadata: GcsSampleDataMeta,
+  pois: GcsSampleDataPoi[],
+  cellId: string,
+}
+
+interface GcsNormalData {
+  metadata: GcsNormalDataMeta,
+  pois: GcsNormalDataPoi[],
+  cellId: string,
+}
+
+interface GcsDetailedData {
+  metadata: GcsDetailedDataMeta,
+  pois: GcsDetailedDataPoi[],
+  clusters: never[], // TODO
+  cellId: string,
+}
+
+export interface Gcs<T> {
+  success: true,
+  data: T[],
+  cellsQueried: number,
+  cellsLoaded: number,
+  snapshot: string,
+  cellLevel: number,
+}
 
 export interface SaveSettings {
   darkMode?: DarkMode,
@@ -110,29 +201,44 @@ interface SocialProfile {
   username: string,
 }
 
+interface MapViewConfig {
+  poiMinZoom: number,
+  poiMaxZoom: number,
+  defaultCellLevel: number,
+  showDetailedViewOnly: boolean,
+  lowZoomDetailedCellLevel: number,
+  mapMinZoom: number,
+  mapMaxZoom: number,
+}
+
 export interface UserProperties {
-  recaptchaKey: string,
   authenticated: boolean,
-  canReview: boolean,
-  attributionDisclaimerAccepted: boolean,
   language: string,
+  hasEnvironmentAccessToSubmitWayspot: boolean,
+  hasEnvironmentAccessToAtlas: boolean,
+  browserKey: string,
+  socialProfile: SocialProfile,
+  amsAdminPerms: [],
+  autoScroll: boolean,
+  recaptchaKey: string,
+  hasEnvironmentAccessToSubmitWayspotDraft: boolean,
+  canReview: boolean,
+  mapViewConfig: MapViewConfig,
+  attributionDisclaimerAccepted: boolean,
   oAuth2LoginEnabled: boolean,
   version: string,
   nianticLoginEnabled: boolean,
-  hasEnvironmentAccessToSubmit: boolean,
+  canResetCredibility: boolean,
+  titanReverseGeocodeEnabled: boolean,
   performance: string,
   rewardProgress: number,
   rewardAvailable: number,
-  browserKey: string,
   nianticLoginStartUri: string,
   attribution: boolean,
-  nianticIdUrl: string,
+  nianticIdUrl: boolean,
   darkMode: DarkMode,
-  socialProfile: SocialProfile,
-  browserClientId: string,
   eligibleToOnboard: boolean,
   onboardingState: string,
-  autoScroll: boolean,
 }
 
 export interface UserSettings {
@@ -195,6 +301,10 @@ export enum OriginalPoiState {
   RETIRED = "RETIRED",
 }
 
+export interface RejectReason {
+  reason: string,
+}
+
 interface Contribution {
   id: string,
   type: ContributionType,
@@ -212,11 +322,10 @@ interface Contribution {
   isMutable: boolean,
   isNianticControlled: boolean,
   statement: string,
-  supportingImageUrl: string,
-  rejectReasons: {
-    reason: string,
-  }[],
+  supportingImageUrls: string[],
+  rejectReasons: RejectReason[],
   canAppeal: boolean,
+  canUpgrade: boolean,
   appealResolved: boolean,
   isClosed: boolean,
   appealNotes: string,
@@ -285,7 +394,7 @@ export interface NewReview extends BaseReview {
   t1: number,
   newLocationMaxDistance: number,
   statement: string,
-  supportingImageUrl: string,
+  supportingImageUrls: string[],
   streetAddress: string,
   categoryIds: string[],
 }

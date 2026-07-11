@@ -18,7 +18,7 @@
 
 import { register } from "../core";
 import { untilTruthy, downloadAsFile, iterKeys, iterObject, makeChildNode } from "../utils";
-import { AnyContribution, ContributionStatus, ContributionType, EditContribution, SubmissionsResult } from "../types";
+import { AnyContribution, ContributionStatus, ContributionType, EditContribution, RejectReason, SubmissionsResult } from "../types";
 
 import "./nomination-stats.css";
 
@@ -196,8 +196,14 @@ const exportNominationsCsv = (subs: AnyContribution[]) => {
         if (k === "rejectReasons") {
           if (!headers.includes(k)) headers.push(k);
           for (const reject of v) {
-            const reasonKey =  k + separator + reject.reason;
+            const reasonKey =  k + separator + (reject as RejectReason).reason;
             if (!headers.includes(reasonKey)) headers.push(reasonKey);
+          }
+        } else if (k === "supportingImageUrls") {
+          if (!headers.includes(k)) headers.push(k);
+          for (let i = 0; i < v.length; i++) {
+            const urlKey =  k + separator + i;
+            if (!headers.includes(urlKey)) headers.push(urlKey);
           }
         }
       } else if (k === "poiData") {
@@ -228,6 +234,10 @@ const exportNominationsCsv = (subs: AnyContribution[]) => {
           row += `"${String(item.poiData[tsKey] ?? "").replace(/"/g, "\"\"")}",`;
         } else if (Array.isArray(item[itemKey]) && itemKey === "rejectReasons") {
           row += item[itemKey].map(r => r.reason).includes(subKey) ? "1," : "0,";
+        } else if (Array.isArray(item[itemKey]) && itemKey === "supportingImageUrls") {
+          const iSubKey = parseInt(subKey);
+          row += iSubKey < item[itemKey].length ? item[itemKey][iSubKey] : "";
+          row += ",";
         } else {
           row += ",";
         }

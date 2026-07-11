@@ -1,5 +1,5 @@
 import { BaseSchema, IDBStoreConnection } from "./idb";
-import { ApiResult, DiscordUserLink, Requests, Responses } from "./types";
+import { ApiResult, DiscordUserLink, PostBody, Responses } from "./types";
 import { untilTruthy, cyrb53, iterObject, makeChildNode, Logger } from "./utils";
 import { CorePluginAPI } from "./scripts/uwt-core";
 
@@ -416,8 +416,8 @@ const addSidebarItem = async (id: string, item: SidebarMenuItem) => {
 };
 
 function makeRequest<Tm extends "GET", Tu extends keyof Responses[Tm] & string>(method: Tm, url: Tu): Promise<Responses[Tm][Tu]>;
-function makeRequest<Tm extends "POST", Tu extends keyof Responses[Tm] & keyof Requests & string>(method: Tm, url: Tu, body: Requests[Tu]): Promise<Responses[Tm][Tu]>;
-function makeRequest<Tm extends keyof Responses, Tu extends keyof Responses[Tm] & string>(method: Tm, url: Tu, body?: Tu extends keyof Requests ? Requests[Tu] : undefined): Promise<Responses[Tm][Tu]> {
+function makeRequest<Tm extends "POST", Tu extends keyof Responses[Tm] & keyof PostBody & string>(method: Tm, url: Tu, body: PostBody[Tu]): Promise<Responses[Tm][Tu]>;
+function makeRequest<Tm extends keyof Responses, Tu extends keyof Responses[Tm] & string>(method: Tm, url: Tu, body?: Tu extends keyof PostBody ? PostBody[Tu] : undefined): Promise<Responses[Tm][Tu]> {
   const logger = new Logger("core:toolbox");
   return new Promise<Responses[Tm][Tu]>((resolve, reject) => {
     const send = (xsrfCookie?: string) => {
@@ -570,11 +570,11 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
     })(XMLHttpRequest.prototype.send);
   }
 
-  public interceptSendJson<Tu extends keyof Requests & keyof Responses["POST"]>(url: Tu, callback: (sent: Requests[Tu], received: Responses["POST"][Tu]) => void) {
+  public interceptSendJson<Tu extends keyof PostBody & keyof Responses["POST"]>(url: Tu, callback: (sent: PostBody[Tu], received: Responses["POST"][Tu]) => void) {
     function handle(data: string, request: XMLHttpRequest, _event: Event) {
       try {
         const resp = request.response;
-        const jSent: Requests[Tu] = JSON.parse(data);
+        const jSent: PostBody[Tu] = JSON.parse(data);
         const jRecv: ApiResult<Responses["POST"][Tu]> = JSON.parse(resp);
         if (!jRecv) return;
         if (jRecv.captcha) return;
@@ -587,10 +587,10 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
     this.interceptSend(url, handle);
   }
 
-  public filterSendJson<Tm extends keyof Responses, Tu extends keyof Requests & keyof Responses[Tm]>(method: Tm, url: Tu, callback: (sent: Requests[Tu]) => boolean) {
+  public filterSendJson<Tm extends keyof Responses, Tu extends keyof PostBody & keyof Responses[Tm]>(method: Tm, url: Tu, callback: (sent: PostBody[Tu]) => boolean) {
     function handle(data: string) {
       try {
-        const jSent: Requests[Tu] = JSON.parse(data);
+        const jSent: PostBody[Tu] = JSON.parse(data);
         return callback(jSent);
       } catch (e) {
         const logger = new Logger("core:toolbox");
