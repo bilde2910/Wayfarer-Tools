@@ -17,7 +17,7 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, NotificationColor, register } from "../core";
-import { filterObject, iterObject, untilTruthy, indexToMap, makeChildNode, toUtcIsoDate, iterKeys, assignAll, Logger, shiftDays } from "../utils";
+import { filterObject, iterObject, untilTruthy, indexToMap, makeChildNode, toUtcIsoDate, iterKeys, assignAll, Logger, shiftDays, readFile } from "../utils";
 import { AnyContribution, ContributionStatus, ContributionType, EditContribution, Nomination, OriginalPoiData, SubmissionsResult } from "../types";
 import { EmailAPI, WayfarerEmail } from "../email";
 import { IDBStoreConnection, KeyNotFoundError } from "../idb";
@@ -25,6 +25,7 @@ import { EmailStyle, EmailType, StoredEmail } from "../email/types";
 
 import "./nomination-status-history.css";
 
+import ImportIcon from "../../assets/import-nsh.svg";
 import LoadingWheel from "../../assets/loading.svg";
 import IconNomination from "../../assets/nomination-history/nomination.svg";
 import IconPhoto from "../../assets/nomination-history/photo.svg";
@@ -119,6 +120,7 @@ export default () => {
     description: "Track changes to contribution status, and receive alerts when a contribution has changed status.",
     defaultConfig: {
       askAboutCrashReports: true,
+      showImportButton: Date.now() < 1785542400000, // Aug 1, 2026, midnight UTC
     },
     sessionData: {},
     initialize: (toolbox, logger, config) => {
@@ -703,6 +705,38 @@ export default () => {
           addEventToHistoryDisplay(box, newEntry, oldStatus);
         }
       };
+
+      const importNSH = async () => {
+        if (!confirm(
+          "Importing will overwrite all currently stored data, " +
+          "are you sure you want to clear your current nomination status history?",
+        )) return;
+        const contents = await readFile(".json", "application/json");
+        const jsonData = JSON.parse(await contents.text()) as StoredContribution[];
+
+        try {
+          using idb = await toolbox.openIDB("history", "readwrite");
+          await idb.clear();
+          idb.put(...jsonData);
+          idb.commit();
+        } catch (error) {
+          alert(`Failed to import data with error:\n${error}`);
+          location.reload();
+          return;
+        }
+
+        alert(`Cleared all saved review history.\nImported ${jsonData.length} status history item(s).`);
+        location.reload();
+      };
+
+      if (config.get("showImportButton")) {
+        toolbox.addImporter({
+          title: "Import Nomination Status History",
+          description: "Import data previously exported from Nomination Status History. Warning: This will overwrite all current data!",
+          callback: importNSH,
+          icon: ImportIcon,
+        });
+      }
 
       toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", handleNominations);
       toolbox.interceptSendJson("/api/v1/vault/manage/hold", simplePostHandler(ContributionStatus.HELD));
