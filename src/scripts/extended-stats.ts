@@ -46,7 +46,7 @@ export default () => {
     authors: ["tehstone", "bilde2910"],
     description: "Add extended Wayfarer Profile stats",
     defaultConfig: {
-      agreementCountType: "upgradecount" as AgreementCountType,
+      agreementCountType: "simple" as AgreementCountType,
       pogoMedalCount: 0,
       bonusUpgrades: 0,
       offsetAgreements: 0,
