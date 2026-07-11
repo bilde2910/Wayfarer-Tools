@@ -81,6 +81,17 @@ export default () => {
             .classList.add("uwftcore-authors");
           makeChildNode(addonRow, "p", addon.description)
             .classList.add("uwftcore-description");
+          if (addon.depends) {
+            makeChildNode(addonRow, "p", "This addon requires the following extra userscripts to be installed:")
+              .classList.add("uwftcore-depends");
+            const ul = makeChildNode(addonRow, "ul");
+            ul.classList.add("uwftcore-depend-line");
+            for (const k in addon.depends) {
+              const a = makeChildNode(makeChildNode(ul, "li"), "a", k) as HTMLAnchorElement;
+              a.href = addon.depends[k];
+              a.target = "_blank";
+            }
+          }
         }
       };
 

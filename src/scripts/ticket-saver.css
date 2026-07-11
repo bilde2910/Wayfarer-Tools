@@ -1,0 +1,151 @@
+.uwtSTH-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 100vw;
+  background-color: rgba(0,0,0,0.5);
+  z-index: 100000;
+}
+.uwtSTH-popup {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-50%);
+  width: calc(100vw - 50px);
+  height: calc(100vh - 50px);
+  overflow-x: hidden;
+  overflow-y: scroll;
+  background-color: #fff;
+  padding: 20px;
+  max-width: 900px;
+}
+.dark .uwtSTH-popup {
+  background-color: #333;
+}
+.uwtSTH-popup h1 {
+  margin-bottom: 20px;
+  width: calc(70% - 70px);
+  float: left;
+}
+.uwtSTH-search {
+  width: 30%;
+  padding: 0.7em;
+  font-size: 1.1em;
+  background-color: #ddd;
+  float: right;
+  display: none;
+}
+.dark .uwtSTH-search {
+  background-color: #222;
+}
+.uwtSTH-searchMatch {
+  background-color: yellow;
+  color: black;
+  display: inline-block;
+  box-shadow: 0 0 4px rgba(0,0,0,0.5);
+  white-space: pre;
+}
+.uwtSTH-close {
+  z-index: 2;
+  font-size: 2em;
+  cursor: pointer;
+  opacity: 0.5;
+  float: right;
+  margin-left: 14px;
+}
+.uwtSTH-close:hover {
+  opacity: 1;
+}
+.uwtSTH-box {
+  height: calc(100% - 60px);
+  display: flex;
+  background-color: #ddd;
+  clear: both;
+}
+.dark .uwtSTH-box {
+  background-color: #222;
+}
+.uwtSTH-box > div {
+  height: 100%;
+}
+.uwtSTH-list {
+  width: 40%;
+  background-color: #eee;
+  overflow-y: scroll;
+  border-right: 3px solid #fff;
+}
+.dark .uwtSTH-list {
+  background-color: #2a2a2a;
+  border-right: 3px solid #333;
+}
+.uwtSTH-chat {
+  width: 60%;
+  overflow-y: scroll;
+  padding-bottom: 15px;
+}
+.uwtSTH-listitem {
+  padding: 10px;
+  border-bottom: 3px solid #fff;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.uwtSTH-listitem p {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.dark .uwtSTH-listitem {
+  border-bottom: 3px solid #333;
+}
+.uwtSTH-selected {
+  background-color: #ddd;
+  cursor: default;
+}
+.dark .uwtSTH-selected {
+  background-color: #222;
+}
+.uwtSTH-message {
+  padding: 15px;
+  clear: both;
+}
+.uwtSTH-chatBubble {
+  border-radius: 8px;
+  max-width: 270px;
+  padding: 10px;
+}
+.uwtSTH-chatBubble a {
+  text-decoration: underline;
+}
+.uwtSTH-msgState-sent .uwtSTH-chatBubble a {
+  color: white;
+}
+.uwtSTH-msgState-received .uwtSTH-chatBubble a {
+  color: black;
+}
+.uwtSTH-msgState-sent .uwtSTH-chatBubble {
+  background-color: rgb(216, 88, 19);
+  color: white;
+  float: right;
+}
+.uwtSTH-msgState-received .uwtSTH-chatBubble {
+  background-color: white;
+  color: black;
+  float: left;
+}
+.uwtSTH-message > p {
+  font-size: 0.8em;
+  opacity: 0.8;
+  margin: 3px;
+}
+.uwtSTH-msgState-received > p {
+  text-align: left;
+}
+.uwtSTH-msgState-sent > p {
+  text-align: right;
+}
+.uwtSTH-mt-option {
+  background-color: #eee;
+  padding: 5px;
+  margin-top: 5px;
+  border: 1px solid #ccc;
+}

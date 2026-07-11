@@ -25,7 +25,7 @@ import { EmailStyle, EmailType, StoredEmail } from "../email/types";
 
 import "./nomination-status-history.css";
 
-import ImportIcon from "../../assets/import-nsh.svg";
+import ImportIcon from "../../assets/import-backup.svg";
 import LoadingWheel from "../../assets/loading.svg";
 import IconNomination from "../../assets/nomination-history/nomination.svg";
 import IconPhoto from "../../assets/nomination-history/photo.svg";
@@ -127,6 +127,12 @@ export default () => {
       config.setUserEditable("askAboutCrashReports", {
         label: "Prompt to send crash reports",
         help: "Enable this to be asked to send crash reports if Nomination Status History crashes while trying to parse an email",
+        editor: new CheckboxEditor(),
+      });
+
+      config.setUserEditable("showImportButton", {
+        label: "Enable backup data import",
+        help: "Adds a sidebar button to import old data from Nomination Status History",
         editor: new CheckboxEditor(),
       });
 

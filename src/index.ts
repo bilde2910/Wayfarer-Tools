@@ -24,6 +24,7 @@ import widescreenReview from "./scripts/widescreen-review";
 import betterDiff from "./scripts/better-diff";
 import proximityBlock from "./scripts/proximity-block";
 import showcaseTracker from "./scripts/showcase-tracker";
+import ticketSaver from "./scripts/ticket-saver";
 
 const availableAddons = [
   uwfToolsCore,
@@ -48,6 +49,7 @@ const availableAddons = [
   betterDiff,
   proximityBlock,
   showcaseTracker,
+  ticketSaver,
 ];
 
 /** Runs when the userscript is loaded initially */

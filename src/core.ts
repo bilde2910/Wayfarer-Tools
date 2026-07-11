@@ -470,6 +470,7 @@ export interface SanitizedAddon {
   name: string,
   authors: string[],
   description: string,
+  depends?: Record<string, string>,
   url?: string,
 }
 

@@ -54,6 +54,14 @@
   opacity: 0.5;
 }
 
+.uwftcore-depends {
+  font-size: 0.8em;
+}
+
+.uwftcore-depend-line {
+  font-size: 0.8em;
+}
+
 .uwftcore-refresh-reminder {
   margin-bottom: 1em;
 }
