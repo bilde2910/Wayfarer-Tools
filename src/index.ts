@@ -25,6 +25,7 @@ import betterDiff from "./scripts/better-diff";
 import proximityBlock from "./scripts/proximity-block";
 import showcaseTracker from "./scripts/showcase-tracker";
 import ticketSaver from "./scripts/ticket-saver";
+import nominationCoordinates from "./scripts/nomination-coordinates";
 
 const availableAddons = [
   uwfToolsCore,
@@ -50,6 +51,7 @@ const availableAddons = [
   proximityBlock,
   showcaseTracker,
   ticketSaver,
+  nominationCoordinates,
 ];
 
 /** Runs when the userscript is loaded initially */

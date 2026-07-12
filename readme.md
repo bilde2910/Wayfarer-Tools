@@ -29,7 +29,7 @@ This repository is still very much a work in progress. The goal is to rework mos
 - [ ] wayfarer-review-pings.user.js
 - [x] wayfarer-review-timer.user.js
 - [ ] wayfarer-skip-count.user.js
-- [ ] wayfarer-ticket-saver.user.js
+- [x] wayfarer-ticket-saver.user.js
 - [ ] wayfarer-translate.user.js
 - [ ] wayfarer-upgrade-percent.user.js
 - [ ] wayfarer-version-display.user.js

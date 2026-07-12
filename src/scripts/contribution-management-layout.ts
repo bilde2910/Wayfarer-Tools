@@ -150,8 +150,6 @@ export default () => {
       };
 
       const interceptDetailsPane = async (data: AnyContribution, nominations: AnyContribution[]) => {
-        await addCoordinates(data);
-
         const containers = document.querySelectorAll(".uwtcml-details-container");
         for (let i = containers.length - 1; i >= 0; i--) containers[i].remove();
         const summaries = document.querySelectorAll(".uwtcml-edits-summary");
@@ -308,20 +306,6 @@ const generateNominationTag = (data: AnyEditContribution) => {
   subTag.classList.add("submission-tag");
   makeChildNode(subTag, "span", tag.label).classList.add(`submission-tag--${tag.style}`);
   return asTag;
-};
-
-const addCoordinates = async (data: AnyContribution) => {
-  const lat = "lat" in data.poiData ? data.poiData.lat : data.lat;
-  const lng = "lng" in data.poiData ? data.poiData.lng : data.lng;
-  const locationP = await untilTruthy(() => document.querySelector<HTMLParagraphElement>("app-submissions app-details-pane p"));
-  const coordinates = `${lat},${lng}`;
-  const newText = `${data.city} ${data.state} (${coordinates})`;
-  locationP.textContent = newText;
-  locationP.style.cursor = "pointer";
-  locationP.title = "Copy coordinates to clipboard";
-  locationP.addEventListener("click", () => {
-    void navigator.clipboard.writeText(coordinates);
-  });
 };
 
 const generateEditSummaryTable = (edits: AnyEditContribution[], type: EditContributionType) => {
