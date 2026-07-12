@@ -16,8 +16,8 @@
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
 
-import { CheckboxEditor, register, SelectBoxEditor } from "../core";
-import { untilTruthy, haversine } from "../utils";
+import { CheckboxEditor, ColorInputEditor, NumericInputEditor, register, SelectBoxEditor } from "../core";
+import { untilTruthy, haversine, DrawnS2Grid, addS2Overlay } from "../utils";
 import { AnyReview } from "../types";
 
 import "./extended-stats.css";
@@ -40,6 +40,16 @@ export default () => {
       display: "map" as MapType,
       renderCloseCircle: true,
       renderMoveCircle: true,
+      s2Grid1Enabled: true,
+      s2Grid1Color: "#FF0000",
+      s2Grid1Level: 17,
+      s2Grid1Opacity: 1,
+      s2Grid1Thickness: 1,
+      s2Grid2Enabled: true,
+      s2Grid2Color: "#0000FF",
+      s2Grid2Level: 14,
+      s2Grid2Opacity: 1,
+      s2Grid2Thickness: 2,
     },
     sessionData: {},
     initialize: (toolbox, logger, config) => {
@@ -60,6 +70,48 @@ export default () => {
         label: "Render minimum move distance circle",
         help: "If a new Wayspot is misplaced, you can move it during review, but only if the new location is more than 2 meters away from the submitter's proposal. Enable this option to make Review Map Mods draw a red circle to highlight this movement deadzone when suggesting a new location for the Wayspot.",
         editor: new CheckboxEditor(),
+      });
+
+      config.setUserEditable("s2Grid1Enabled", {
+        label: "Primary S2 cell grid enabled",
+        editor: new CheckboxEditor(),
+      });
+      config.setUserEditable("s2Grid1Level", {
+        label: "Primary S2 cell grid level",
+        editor: new NumericInputEditor({ min: 0, max: 20 }),
+      });
+      config.setUserEditable("s2Grid1Color", {
+        label: "Primary S2 cell grid color",
+        editor: new ColorInputEditor(),
+      });
+      config.setUserEditable("s2Grid1Opacity", {
+        label: "Primary S2 cell grid opacity",
+        editor: new NumericInputEditor({ min: 0, max: 1, step: 0.01 }),
+      });
+      config.setUserEditable("s2Grid1Thickness", {
+        label: "Primary S2 cell grid thickness",
+        editor: new NumericInputEditor({ min: 0 }),
+      });
+
+      config.setUserEditable("s2Grid2Enabled", {
+        label: "Secondary S2 cell grid enabled",
+        editor: new CheckboxEditor(),
+      });
+      config.setUserEditable("s2Grid2Level", {
+        label: "Secondary S2 cell grid level",
+        editor: new NumericInputEditor({ min: 0, max: 20 }),
+      });
+      config.setUserEditable("s2Grid2Color", {
+        label: "Secondary S2 cell grid color",
+        editor: new ColorInputEditor(),
+      });
+      config.setUserEditable("s2Grid2Opacity", {
+        label: "Secondary S2 cell grid opacity",
+        editor: new NumericInputEditor({ min: 0, max: 1, step: 0.01 }),
+      });
+      config.setUserEditable("s2Grid2Thickness", {
+        label: "Secondary S2 cell grid thickness",
+        editor: new NumericInputEditor({ min: 0 }),
       });
 
       let pano: google.maps.StreetViewPanorama | null = null;
@@ -94,6 +146,20 @@ export default () => {
         if (mapCtx !== null) {
           logger.info(mapCtx);
           const map = mapCtx.componentRef.map as google.maps.Map;
+          const grids = <DrawnS2Grid[]>[];
+          if (config.get("s2Grid1Enabled")) grids.push({
+            level: config.get("s2Grid1Level"),
+            color: config.get("s2Grid1Color"),
+            opacity: config.get("s2Grid1Opacity"),
+            thickness: config.get("s2Grid1Thickness"),
+          });
+          if (config.get("s2Grid2Enabled")) grids.push({
+            level: config.get("s2Grid2Level"),
+            color: config.get("s2Grid2Color"),
+            opacity: config.get("s2Grid2Opacity"),
+            thickness: config.get("s2Grid2Thickness"),
+          });
+          if (grids.length) await addS2Overlay(map, grids);
           if (config.get("renderCloseCircle")) drawCloseCircle(map, candidate);
           void addLocationChangeBtnListener(map, mapCtx, candidate);
           addLocationResetChangeBtnListener(map, mapCtx, candidate);

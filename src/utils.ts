@@ -1,6 +1,8 @@
 import type resources from "../assets/resources.json";
 import { GeofenceMap } from "./types";
 
+import { S2 } from "s2-geometry";
+
 //#region resources
 
 /** Key of a resource in `assets/resources.json` and extra keys defined by `tools/post-build.ts` */
@@ -314,7 +316,121 @@ const weightNumbers = (a: number, b: number, ratio: number) =>
 export const weightNumericArray = (arr1: number[], arr2: number[], ratio: number) =>
   mergeArraysToObject(arr1, arr2).map(({a, b}) => weightNumbers(a, b, ratio));
 
-//#region Loggnig
+//#region S2 cell utils
+
+export interface DrawnS2Grid {
+  level: number,
+  color: string,
+  thickness?: number,
+  opacity?: number,
+}
+
+export class S2Overlay {
+  polyLines: google.maps.Polyline[];
+
+  constructor() {
+    this.polyLines = [];
+  }
+
+  checkMapBoundsReady(map: google.maps.Map) {
+    return !!map && typeof map.getBounds !== "undefined" && typeof map.getBounds() !== "undefined";
+  }
+
+  until(cond: (map: google.maps.Map) => boolean, map: google.maps.Map) {
+    const poll = (resolve: (value: unknown) => void, reject: (reason?: any) => void) => {
+      if (cond(map)) resolve(map);
+      else setTimeout(() => poll(resolve, reject), 400);
+    };
+    return new Promise(poll);
+  }
+
+  async updateGrid(map: google.maps.Map, grids: DrawnS2Grid[]) {
+    this.polyLines.forEach((line) => line.setMap(null));
+    for (const grid of grids) {
+      await this.drawCellGrid(map, grid);
+    }
+  }
+
+  async drawCellGrid(map: google.maps.Map, grid: DrawnS2Grid) {
+    await this.until(this.checkMapBoundsReady, map);
+    const bounds = map.getBounds();
+    if (typeof bounds === "undefined") return;
+    const zoom = map.getZoom();
+    const seenCells: Record<string, boolean> = {};
+    const cellsToDraw = [];
+
+
+    if (grid.level >= 2 && typeof zoom !== "undefined" && grid.level < (zoom + 2)) {
+      const ll = map.getCenter();
+      if (typeof ll === "undefined") return;
+      const cell = S2.S2Cell.FromLatLng(this.getLatLngPoint(ll), grid.level);
+      cellsToDraw.push(cell);
+      seenCells[cell.toString()] = true;
+
+      let curCell;
+      while (cellsToDraw.length > 0) {
+        curCell = cellsToDraw.pop()!;
+        const neighbors: S2.S2Cell[] = curCell.getNeighbors();
+
+        for (let n = 0; n < neighbors.length; n++) {
+          const nStr = neighbors[n].toString();
+          if (!seenCells[nStr]) {
+            seenCells[nStr] = true;
+            if (this.isCellOnScreen(bounds, neighbors[n])) {
+              cellsToDraw.push(neighbors[n]);
+            }
+          }
+        }
+
+        this.drawCell(map, curCell, grid);
+      }
+    }
+  }
+
+  drawCell(map: google.maps.Map, cell: S2.S2Cell, style: DrawnS2Grid) {
+    const cellCorners: S2.L.LatLng[] = cell.getCornerLatLngs();
+    cellCorners[4] = cellCorners[0]; // Loop it
+    const polyline = new google.maps.Polyline({
+      path: cellCorners,
+      geodesic: true,
+      strokeColor: style.color,
+      strokeOpacity: style.opacity ?? 1,
+      strokeWeight: style.thickness ?? 1,
+      map: map,
+    });
+    this.polyLines.push(polyline);
+  }
+
+  getLatLngPoint(data: { lat: number | (() => number), lng: number | (() => number) }) {
+    return {
+      lat: typeof data.lat == "function" ? data.lat() : data.lat,
+      lng: typeof data.lng == "function" ? data.lng() : data.lng,
+    };
+  }
+
+  isCellOnScreen(mapBounds: google.maps.LatLngBounds, cell: S2.S2Cell) {
+    const corners = cell.getCornerLatLngs();
+    for (let i = 0; i < corners.length; i++) {
+      if (mapBounds.intersects(new google.maps.LatLngBounds(corners[i]))) {
+        return true;
+      }
+    }
+    return false;
+  }
+}
+
+export const addS2Overlay = async (map: google.maps.Map, grids: DrawnS2Grid[]) => {
+  const overlay = new S2Overlay();
+  grids.sort((a, b) => b.level - a.level);
+  for (const grid of grids) {
+    await overlay.drawCellGrid(map, grid);
+  }
+  map.addListener("idle", async () => {
+    await overlay.updateGrid(map, grids);
+  });
+};
+
+//#region Logging
 
 export class Logger {
   #subsystem: string;

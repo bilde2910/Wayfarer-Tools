@@ -186,6 +186,27 @@ export class TextInputEditor implements OptionEditor<string> {
   }
 }
 
+export class ColorInputEditor implements OptionEditor<string> {
+  constructor() {}
+
+  render(opts: RendererOptions<string>) {
+    const label = makeChildNode(opts.parent, "label", `${opts.label}: `);
+    if (opts.help) {
+      label.title = opts.help;
+      label.classList.add("uwftcore-help-available");
+    }
+    const input = document.createElement("input");
+    input.type = "color";
+    label.appendChild(input);
+    input.classList.add("uwftcore-fix");
+    input.value = opts.value.toString();
+    input.addEventListener("change", () => {
+      if (input.value === "") opts.clear();
+      else opts.save(input.value);
+    });
+  }
+}
+
 interface DiscordUserLinkEditorOptions {
   authWindowUrl: string,
   confirmationText: string,
