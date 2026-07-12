@@ -17,7 +17,7 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, NumericInputEditor, register } from "../core";
-import { untilTruthy, debounce, weightNumericArray, DrawnS2Grid, S2Overlay, addS2Overlay } from "../utils";
+import { untilTruthy, debounce, weightNumericArray, DrawnS2Grid, addS2Overlay } from "../utils";
 import { AnyContribution, ContributionStatus, SubmissionsResult } from "../types";
 
 import { Cluster, ClusterStats, Marker, MarkerClusterer, Renderer } from "@googlemaps/markerclusterer";
