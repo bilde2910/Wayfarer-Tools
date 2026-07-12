@@ -33,6 +33,8 @@ export default () => {
         editor: new CheckboxEditor(),
       });
 
+      let reloadNotified = false;
+
       const renderOprtSettings = async (_data: UserSettings) => {
         const ref = await untilTruthy(() => document.querySelector("app-settings"));
         const box = document.createElement("div");
@@ -81,6 +83,18 @@ export default () => {
               else plugins = plugins.filter(n => n !== addon.id);
               config.set("activePlugins", plugins);
               logger.info(addon.id, "was", newState ? "enabled" : "disabled");
+              if (!reloadNotified) {
+                reloadNotified = true;
+                const msg = document.createElement("span");
+                msg.textContent = "To apply changes to active plugins, a reload is required. ";
+                makeChildNode(msg, "a", "Click here to reload now.")
+                  .addEventListener("click", () => location.reload());
+                toolbox.notify({
+                  color: "red",
+                  message: msg,
+                  dismissable: false,
+                });
+              }
             });
           }
 
