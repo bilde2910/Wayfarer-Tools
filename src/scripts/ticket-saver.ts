@@ -125,7 +125,7 @@ export default () => {
     authors: ["tehstone", "bilde2910"],
     description: "Saves interactions with Niantic Support initiated through Wayfarer.",
     depends: {
-      "Helpshift Helper for UWT": "https://github.com/bilde2910/Wayfarer-Tools/raw/refs/heads/main/helpers/uwt-helpshift-helper.user.js",
+      "Helpshift Helper for UWT": "https://static.varden.info/wayfarer-tools/dist/uwt-helpshift-helper.user.js",
     },
     defaultConfig: {
       showImportButton: true,
