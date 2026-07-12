@@ -1,0 +1,34 @@
+.uwftsc-outer {
+  color: #333;
+  margin-left: 2em;
+  padding-top: 0.3em;
+  text-align: center;
+  display: block;
+}
+
+.dark .uwftsc-outer {
+  color: #ddd;
+}
+
+.uwftsc-outer p:nth-child(2) {
+  font-size: 20px;
+}
+
+.uwftsc-normal {
+  color: #20B8E3;
+}
+.uwftsc-low {
+  color: #44ce1b;
+}
+.uwftsc-mid {
+  color: #bbdb44;
+}
+.uwftsc-med {
+  color: #f7e379;
+}
+.uwftsc-high {
+  color: #f2a134;
+}
+.uwftsc-extreme {
+  color: #e51f1f;
+}

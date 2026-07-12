@@ -22,6 +22,7 @@ export interface DiscordUserLink {
 
 export interface PostBody {
   "/api/v1/vault/review": AnySubmittedReview,
+  "/api/v1/vault/review/skip": SkipReview,
   "/api/v1/vault/manage/hold": SetHold,
   "/api/v1/vault/manage/releasehold": ReleaseHold,
   "/api/v1/vault/manage/edit": ModifyContribution,
@@ -50,6 +51,7 @@ export interface Responses {
   },
   "POST": {
     "/api/v1/vault/review": string,
+    "/api/v1/vault/review/skip": boolean,
     "/api/v1/vault/manage/hold": string,
     "/api/v1/vault/manage/releasehold": string,
     "/api/v1/vault/manage/edit": string,
@@ -495,6 +497,10 @@ export interface ReleaseHold {
 }
 
 export interface LoadDetails {
+  id: string,
+}
+
+export interface SkipReview {
   id: string,
 }
 

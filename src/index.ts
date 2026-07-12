@@ -26,6 +26,7 @@ import proximityBlock from "./scripts/proximity-block";
 import showcaseTracker from "./scripts/showcase-tracker";
 import ticketSaver from "./scripts/ticket-saver";
 import nominationCoordinates from "./scripts/nomination-coordinates";
+import skipCount from "./scripts/skip-count";
 
 const availableAddons = [
   uwfToolsCore,
@@ -52,6 +53,7 @@ const availableAddons = [
   showcaseTracker,
   ticketSaver,
   nominationCoordinates,
+  skipCount,
 ];
 
 /** Runs when the userscript is loaded initially */
