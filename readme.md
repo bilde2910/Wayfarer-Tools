@@ -32,7 +32,7 @@ This repository is still very much a work in progress. The goal is to rework mos
 - [x] wayfarer-ticket-saver.user.js
 - [ ] wayfarer-translate.user.js
 - [ ] wayfarer-upgrade-percent.user.js
-- [ ] wayfarer-version-display.user.js
+- [x] wayfarer-version-display.user.js
 </details>
 
 ## Prerequisites

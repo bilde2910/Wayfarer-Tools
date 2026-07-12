@@ -27,6 +27,7 @@ import showcaseTracker from "./scripts/showcase-tracker";
 import ticketSaver from "./scripts/ticket-saver";
 import nominationCoordinates from "./scripts/nomination-coordinates";
 import skipCount from "./scripts/skip-count";
+import versionDisplay from "./scripts/version-display";
 
 const availableAddons = [
   uwfToolsCore,
@@ -54,6 +55,7 @@ const availableAddons = [
   ticketSaver,
   nominationCoordinates,
   skipCount,
+  versionDisplay,
 ];
 
 /** Runs when the userscript is loaded initially */

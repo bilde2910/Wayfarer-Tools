@@ -1,0 +1,54 @@
+#uwtvd-display {
+  width: 55px;
+  height: 20px;
+  overflow: hidden;
+  position: absolute;
+  top: 0;
+  left: 90px;
+}
+
+#uwtvd-display span {
+  position: absolute;
+  white-space: nowrap;
+  transform: translateX(0);
+  transition: 2s;
+  margin-top: -1px;
+  font-weight: bold;
+  color: rgb(32, 184, 227);
+}
+
+#uwtvd-display:hover span {
+  transform: translateX(calc(55px - 100%));
+}
+
+wf-logo.uwtvd-touched {
+  position: absolute;
+  top: 0.5rem;
+  left: 0.5rem;
+}
+
+@media (max-width: 1024px) {
+  wf-logo.uwtvd-touched {
+    left: 3.5rem;
+  }
+
+  #uwtvd-display {
+    overflow: visible;
+  }
+
+  #uwtvd-display:hover span {
+    transform: none;
+  }
+}
+
+.uwtvd-update-available #uwtvd-display {
+  animation: blink-animation 2s steps(2, start) infinite;
+}
+
+.uwtvd-update-available #uwtvd-display span {
+  color: red;
+}
+
+@keyframes blink-animation {
+  to { visibility: hidden; }
+}
