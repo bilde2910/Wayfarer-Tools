@@ -1,4 +1,4 @@
-import { register } from "../core";
+import { CheckboxEditor, register } from "../core";
 import { untilTruthy, makeChildNode } from "../utils";
 import { UserSettings } from "../types";
 import { StoredEmail } from "../email/types";
@@ -23,9 +23,16 @@ export default () => {
     url: "https://github.com/bilde2910/Wayfarer-Tools",
     defaultConfig: {
       activePlugins: <string[]>[],
+      externCompat: false,
     },
     sessionData: {},
     initialize: (toolbox, logger, config): CorePluginAPI => {
+      config.setUserEditable("externCompat", {
+        label: "External addon compatibility",
+        help: "Exposes UWT APIs to the browser, allowing external userscripts not part of UWT to interact with addons in UWT that expose an API",
+        editor: new CheckboxEditor(),
+      });
+
       const renderOprtSettings = async (_data: UserSettings) => {
         const ref = await untilTruthy(() => document.querySelector("app-settings"));
         const box = document.createElement("div");
@@ -106,6 +113,14 @@ export default () => {
       };
 
       toolbox.interceptOpenJson("GET", "/api/v1/vault/settings", renderOprtSettings);
+
+      if (config.get("externCompat")) {
+        const publicApi = {
+          getAddonAPI: toolbox.getAddonAPI,
+        };
+        const w = (typeof unsafeWindow !== "undefined" ? unsafeWindow : window) as Window & { UWTApi?: typeof publicApi };
+        w.UWTApi = publicApi;
+      }
 
       let emailAPI: EmailAPI | null = null;
       return {
