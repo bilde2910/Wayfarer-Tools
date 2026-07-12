@@ -155,18 +155,12 @@ export default () => {
           strokeOpacity: 0.8,
           strokeWeight: 1,
           fillOpacity: 0.2,
+          clickable: false,
         });
 
       const modifyNewReviewMap = async (ref: HTMLElement, candidate: AnyReview, mapCtx: any) => {
         logger.info("Modifying new review map");
         const map = mapCtx.componentRef.map as google.maps.Map;
-        const markers = mapCtx.componentRef.markers;
-
-        // Correct the size of the default marker
-        const defaultMarker = markers.default.markers[0];
-        defaultMarker.icon.size.height = defaultMarker.icon.size.width;
-        // Needed to apply the change
-        document.querySelector<HTMLButtonElement>(RESET_SELECTOR)?.click();
 
         const nomLocation = new google.maps.LatLng(candidate.lat, candidate.lng);
         map.setZoom(17);
