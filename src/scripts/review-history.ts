@@ -80,8 +80,12 @@ interface IdbStores {
   history: StoredReview,
 }
 
+interface ReviewHistoryAPI {
+  getAllReviews: () => Promise<StoredReview[]>,
+}
+
 export default () => {
-  register<IdbStores, void>()({
+  register<IdbStores, ReviewHistoryAPI>()({
     id: "review-history",
     name: "Review History",
     authors: ["tehstone", "bilde2910"],
@@ -462,6 +466,17 @@ export default () => {
       toolbox.interceptOpenJson("GET", "/api/v1/vault/review", handleIncomingReview);
       toolbox.interceptOpenJson("GET", "/api/v1/vault/profile", handleProfile);
       toolbox.interceptSendJson("/api/v1/vault/review", handleSubmittedReview);
+
+      return {
+        async getAllReviews() {
+          let result = [];
+          {
+            using idb = await toolbox.openIDB("history", "readonly");
+            result = await idb.getAll();
+          }
+          return result;
+        },
+      };
     },
   });
 };
