@@ -35,6 +35,12 @@ jobs:
         name: resources
         path: resources/*
         overwrite: true
+    - name: Upload helpers
+      uses: actions/upload-artifact@v7
+      with:
+        name: helpers
+        path: helpers/*
+        overwrite: true
 
   deploy:
     needs: build
@@ -50,6 +56,11 @@ jobs:
       with:
         name: resources
         path: resources
+    - name: Download helpers
+      uses: actions/download-artifact@v7
+      with:
+        name: helpers
+        path: helpers
     - name: Publish scripts and assets
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -62,3 +73,4 @@ jobs:
         chmod 600 ~/.ssh/id_ed25519 ~/.ssh/known_hosts
         scp dist/* "${SSH_TARGET}:dist/"
         scp resources/* "${SSH_TARGET}:assets/"
+        scp helpers/* "${SSH_TARGET}:dist/"
