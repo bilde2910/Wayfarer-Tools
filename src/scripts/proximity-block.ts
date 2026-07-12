@@ -65,10 +65,12 @@ export default () => {
       const proximityBlockingFor = (nom: Nomination) => {
         const conflicting = getConflictingS2L17Cells(nom.lat, nom.lng).map(c => c.toString());
         const blockingNoms = nominations
-          .filter(n =>
-            n.status === ContributionStatus.NOMINATED ||
-            n.status === ContributionStatus.VOTING ||
-            n.status === ContributionStatus.HELD,
+          .filter(n => !n.upgraded &&
+            (
+              n.status === ContributionStatus.NOMINATED ||
+              n.status === ContributionStatus.VOTING ||
+              n.status === ContributionStatus.HELD
+            ),
           )
           .filter(n => n.id !== nom.id)
           .filter(n => conflicting.includes(S2.S2Cell.FromLatLng(n, 17).toString()));
@@ -84,6 +86,7 @@ export default () => {
 
         if (nom.type !== ContributionType.NOMINATION) return;
         if (nom.status !== ContributionStatus.NOMINATED) return;
+        if (nom.upgraded) return;
 
         // If the current Wayspot data is blocked by another in-voting nomination, mark it as "proximity blocked".
         const blockers = proximityBlockingFor(nom).filter(n => n.status === ContributionStatus.VOTING);
