@@ -550,7 +550,7 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
     const addonId = this.#addon.id;
     (function (open) {
       XMLHttpRequest.prototype.open = function (m, u) {
-        this._oprTools = {
+        this._uwtTools = {
           method: m,
           url: u,
         };
@@ -560,7 +560,7 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
     })(XMLHttpRequest.prototype.open);
     (function (send) {
       XMLHttpRequest.prototype.send = function (body: string) {
-        if (this._oprTools.method !== method || this._oprTools.url !== url || filter(body, this)) {
+        if (this._uwtTools.method !== method || this._uwtTools.url !== url || filter(body, this)) {
           const args: any = arguments;
           send.apply(this, args);
         } else {

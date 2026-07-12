@@ -29,7 +29,7 @@ interface DynamicMap {
 }
 
 interface EnrichedStaticMapElement extends HTMLElement {
-  __oprTools_DME?: DynamicMap,
+  __uwtTools_DME?: DynamicMap,
 }
 
 interface StaticMapConfig {
@@ -84,17 +84,17 @@ export default () => {
           if (chosenMapType === "auto") chosenMapType = mapConfig.mapType as ValidMapTypeID;
 
           staticMap.classList.add("uwtdme-hidden");
-          if (typeof staticMap.__oprTools_DME === "undefined") {
+          if (typeof staticMap.__uwtTools_DME === "undefined") {
             const node = document.createElement("div");
             staticMap.parentElement!.insertBefore(node, staticMap);
-            staticMap.__oprTools_DME = createDynamicMap(node, mapConfig, chosenMapType);
+            staticMap.__uwtTools_DME = createDynamicMap(node, mapConfig, chosenMapType);
           } else {
-            reconfigureDynamicMap(staticMap.__oprTools_DME, mapConfig, chosenMapType);
+            reconfigureDynamicMap(staticMap.__uwtTools_DME, mapConfig, chosenMapType);
           }
 
-          addDynamicMapMarkers(staticMap.__oprTools_DME, mapConfig.markers);
+          addDynamicMapMarkers(staticMap.__uwtTools_DME, mapConfig.markers);
           if (config.get("autoLoadStreetView")) {
-            loadStreetView(staticMap.__oprTools_DME, mapConfig.markers[0].position!)
+            loadStreetView(staticMap.__uwtTools_DME, mapConfig.markers[0].position!)
               .catch((ex) => {
                 logger.warn("Failed to load Street View", ex);
               });
