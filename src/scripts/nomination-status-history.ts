@@ -49,14 +49,6 @@ const SUPPORTED_EMAIL_TYPES = [
   EmailType.EDIT_DECIDED,*/
 ];
 
-// If this changes, also update the CSS declaration
-const CONTRIB_DATE_SELECTOR = "app-submissions app-details-pane app-submission-tag-set + span";
-
-// Right triangle needs a VS15 variant selector (U+FE0E) to avoid being rendered as an emoji
-// https://en.wikipedia.org/wiki/Geometric_Shapes_(Unicode_block)#Emoji
-const RIGHT_TRIANGLE = "\uFE0E\u25B6";
-const DOWN_TRIANGLE = "\u25BC";
-
 type HistoryEntryStatus = ContributionStatus | "UPGRADE";
 
 const STATE_MAP: Record<HistoryEntryStatus, string> = {
@@ -141,12 +133,6 @@ export default () => {
       config.setUserEditable("notifyNewContributions", {
         label: "Notify about new contributions",
         help: "Create popup notifications whenever new contributions are detected in the contributions list",
-        editor: new CheckboxEditor(),
-      });
-
-      config.setUserEditable("expandedByDefault", {
-        label: "Expand the status history list by default",
-        help: "Always show the full history by default when viewing a contribution",
         editor: new CheckboxEditor(),
       });
 
@@ -387,73 +373,10 @@ export default () => {
       }
 
       const handleNominations = async (result: SubmissionsResult) => {
+        latestSubmissions = result.submissions;
+        changeCheckStarted = true;
         await checkNominationChanges(result.submissions);
         void importEmails(result.submissions);
-
-        // Add event listener for each element in the nomination list,
-        // so we can display the history box for nominations on click.
-        const ref = await untilTruthy(() => document.querySelector("app-submissions-list"));
-
-        ref.addEventListener("click", async (e) => {
-          // Ensure there is only one selection box.
-          const elements = document.querySelectorAll(".uwtnsh-dropdown");
-          for (const e of elements) e.remove();
-          const item = (e.target! as HTMLElement).closest("app-submissions-list-item");
-          if (item !== null) {
-            // Hopefully this index is constant and never changes?
-            // I don't see a better way to access it.
-            const nomId: StoredContribution["id"] = (item as any).__ngContext__[22].id;
-            if (nomId) {
-              const dsRef = await untilTruthy(() => document.querySelector(CONTRIB_DATE_SELECTOR));
-              const box = makeChildNode(dsRef.parentNode!, "div");
-              box.classList.add("uwtnsh-dropdown");
-
-              const leftBox = makeChildNode(box, "a", RIGHT_TRIANGLE);
-              leftBox.classList.add("uwtnsh-dd-left");
-              const rightBox = makeChildNode(box, "div");
-              rightBox.classList.add("uwtnsh-dd-right");
-
-              const collapsedLine = makeChildNode(rightBox, "p");
-              collapsedLine.classList.add("uwtnsh-collapsed");
-              const expandedBox = makeChildNode(rightBox, "div");
-              expandedBox.classList.add("uwtnsh-expanded");
-
-              const toggleCollapsed = (ev?: Event) => {
-                ev?.preventDefault();
-                collapsed = !collapsed;
-                collapsedLine.style.display = collapsed ? "block" : "none";
-                expandedBox.style.display = collapsed ? "none" : "block";
-                leftBox.textContent = collapsed ? RIGHT_TRIANGLE : DOWN_TRIANGLE;
-                return false;
-              };
-
-              let collapsed = config.get("expandedByDefault");
-              toggleCollapsed();
-              box.addEventListener("click", toggleCollapsed);
-
-              // Don't populate the dropdown until the nomination change detection has run successfully.
-              // That process sets ready = true when done. If it was already ready, then this will
-              // continue immediately. When ready, that means the previous connection was closed, so we
-              // open a new connection here to fetch data for the selected nomination.
-              await untilTruthy(() => ready);
-              using idb = await toolbox.openIDB("history", "readonly");
-              const savedNom = await idb.get(nomId);
-
-              // Create an option for initial nomination; this may not be stored in the IDB history,
-              // so we need to handle this as a special case here.
-              if (savedNom.statusHistory.length == 0 || savedNom.statusHistory[0].status !== ContributionStatus.NOMINATED) {
-                collapsedLine.textContent = `${savedNom.day} - Nominated`;
-                makeChildNode(expandedBox, "p", `${savedNom.day} - Nominated`);
-              }
-              // Then, add options for each entry in the history.
-              let previous: HistoryEntryStatus | null = null;
-              for (const entry of savedNom.statusHistory) {
-                addEventToHistoryDisplay(box, entry, previous);
-                previous = entry.status;
-              }
-            }
-          }
-        });
       };
 
       let lastLoadSubmissions: AnyContribution[] = [];
@@ -505,7 +428,21 @@ export default () => {
         });
       };
 
-      const addEventToHistoryDisplay = (box: Element, current: StatusHistoryEntry, prevStatus: HistoryEntryStatus | null) => {
+      // ---- redesign: the Contribution Management page (app-submissions-list, the details pane and Angular's
+      // internal data) the history dropdown was added to is gone. Tracking changes and processing emails
+      // work as before; the history is now shown in a window opened with a button at the bottom left.
+      const TYPE_LABELS: Record<ContributionType, string> = {
+        [ContributionType.NOMINATION]: "Nomination",
+        [ContributionType.PHOTO]: "Photo",
+        [ContributionType.EDIT_LOCATION]: "Location edit",
+        [ContributionType.EDIT_TITLE]: "Title edit",
+        [ContributionType.EDIT_DESCRIPTION]: "Description edit",
+      };
+
+      let latestSubmissions: AnyContribution[] | null = null;
+      let changeCheckStarted = false;
+
+      const describeEntry = (current: StatusHistoryEntry, prevStatus: HistoryEntryStatus | null) => {
         let statusText: string;
         if (current.status === "NOMINATED" && prevStatus !== null) {
           statusText = prevStatus === "HELD" ? "Hold released" : "Returned to queue";
@@ -515,31 +452,115 @@ export default () => {
 
         // Format the date as UTC as this is what Wayfarer uses to display the nomination date.
         // Maybe make this configurable to user's local time later?
-        const prefix = `${toUtcIsoDate(new Date(current.timestamp))} - `;
+        return { prefix: `${toUtcIsoDate(new Date(current.timestamp))} - `, statusText };
+      };
 
-        const collapsedLine = box.querySelector(".uwtnsh-collapsed")!;
-        collapsedLine.textContent = prefix + statusText;
-        const line = document.createElement("p");
-        line.appendChild(document.createTextNode(prefix));
-        if (current.verified) collapsedLine.classList.add("uwtnsh-verified");
-        else if (collapsedLine.classList.contains("uwtnsh-verified")) collapsedLine.classList.remove("uwtnsh-verified");
+      const renderHistory = (target: HTMLElement, sub: AnyContribution, saved: StoredContribution | undefined) => {
+        const history = saved?.statusHistory ?? [];
+        // The initial nomination may not be stored in the IDB history, so it is a special case here.
+        if (history.length === 0 || history[0].status !== ContributionStatus.NOMINATED) {
+          makeChildNode(target, "p", `${saved?.day ?? sub.day} - Nominated`);
+        }
+        let previous: HistoryEntryStatus | null = null;
+        for (const entry of history) {
+          const { prefix, statusText } = describeEntry(entry, previous);
+          const line = makeChildNode(target, "p");
+          line.appendChild(document.createTextNode(prefix));
+          if (typeof entry.email !== "undefined") {
+            const aDisplay = makeChildNode(line, "a", statusText);
+            aDisplay.addEventListener("click", async () => {
+              const emailAPI = await toolbox.getAddonAPI("uwt-core")!.email();
+              const email = await emailAPI.get(entry.email!);
+              email.display();
+            });
+          } else {
+            line.appendChild(document.createTextNode(statusText));
+          }
+          if (entry.verified) line.classList.add("uwtnsh-verified");
+          previous = entry.status;
+        }
+      };
 
-        if (typeof current.email !== "undefined") {
-          const aDisplay = makeChildNode(line, "a", statusText);
-          aDisplay.addEventListener("click", async (e) => {
-            e.stopPropagation();
-            const emailAPI = await toolbox.getAddonAPI("uwt-core")!.email();
-            const email = await emailAPI.get(current.email!);
-            email.display();
-          });
-        } else {
-          line.appendChild(document.createTextNode(statusText));
+      const openHistoryWindow = async () => {
+        const { container, dismiss } = await toolbox.createModal("uwtnsh-modal");
+        if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+          container.classList.add("uwt-dark");
+        }
+        const close = makeChildNode(container, "button", "\u00d7");
+        close.className = "uwtnsh-x";
+        close.addEventListener("click", dismiss);
+        makeChildNode(container, "h2", "Contribution status history");
+        const body = makeChildNode(container, "div");
+        body.className = "uwtnsh-body";
+        makeChildNode(body, "p", "Loading contributions...");
+
+        let subs = latestSubmissions;
+        if (subs === null) {
+          try {
+            const data = await toolbox.makeRequest("GET", "/api/v1/vault/manage");
+            if (data && data.submissions) subs = data.submissions;
+          } catch (e) {
+            logger.error(e);
+          }
+        }
+        if (subs === null) {
+          body.textContent = "Could not load your contributions.";
+          return;
+        }
+        // Don't read the history while the change detection (which writes to it) is still running.
+        if (changeCheckStarted) await untilTruthy(() => ready);
+        let stored: Record<string, StoredContribution> = {};
+        {
+          using idb = await toolbox.openIDB("history", "readonly");
+          stored = indexToMap(await idb.getAll(), "id");
         }
 
-        if (current.verified) line.classList.add("uwtnsh-verified");
-        const expandedBox = box.querySelector(".uwtnsh-expanded")!;
-        expandedBox.appendChild(line);
+        body.innerHTML = "";
+        const list = [...subs].sort((a, b) => b.order - a.order);
+        if (list.length === 0) {
+          makeChildNode(body, "p", "You have no contributions yet.");
+          return;
+        }
+        const side = makeChildNode(body, "div");
+        side.className = "uwtnsh-side";
+        const search = makeChildNode(side, "input") as HTMLInputElement;
+        search.type = "text";
+        search.placeholder = "Search contributions";
+        const listBox = makeChildNode(side, "div");
+        listBox.className = "uwtnsh-list";
+        const detail = makeChildNode(body, "div");
+        detail.className = "uwtnsh-detail";
+
+        const items: { button: HTMLElement, text: string }[] = [];
+        for (const sub of list) {
+          const title = sub.title || (sub.poiData as Partial<OriginalPoiData>)?.title || "(untitled)";
+          const button = makeChildNode(listBox, "button");
+          button.className = "uwtnsh-item";
+          makeChildNode(button, "span", title);
+          makeChildNode(button, "small", `${TYPE_LABELS[sub.type] ?? sub.type} - ${sub.day} - ${STATE_MAP[sub.status] ?? sub.status}`);
+          button.addEventListener("click", () => {
+            for (const item of items) item.button.classList.toggle("uwtnsh-active", item.button === button);
+            detail.innerHTML = "";
+            makeChildNode(detail, "h3", title);
+            makeChildNode(detail, "p", `${TYPE_LABELS[sub.type] ?? sub.type} submitted ${sub.day}. Current status: ${STATE_MAP[sub.status] ?? sub.status}`)
+              .classList.add("uwtnsh-summary");
+            renderHistory(makeChildNode(detail, "div"), sub, stored[sub.id]);
+          });
+          items.push({ button, text: `${title} ${sub.day} ${TYPE_LABELS[sub.type] ?? ""}`.toLowerCase() });
+        }
+        search.addEventListener("input", () => {
+          const q = search.value.trim().toLowerCase();
+          for (const item of items) item.button.style.display = item.text.includes(q) ? "" : "none";
+        });
+        items[0].button.click();
       };
+
+      // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+      toolbox.addMenuItem("nomination-status-history", {
+        label: "Contribution status history",
+        icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"8\" y1=\"6\" x2=\"21\" y2=\"6\"/><line x1=\"8\" y1=\"12\" x2=\"21\" y2=\"12\"/><line x1=\"8\" y1=\"18\" x2=\"21\" y2=\"18\"/><line x1=\"3\" y1=\"6\" x2=\"3.01\" y2=\"6\"/><line x1=\"3\" y1=\"12\" x2=\"3.01\" y2=\"12\"/><line x1=\"3\" y1=\"18\" x2=\"3.01\" y2=\"18\"/></svg>",
+        callback: () => { void openHistoryWindow(); },
+      });
 
       const checkNominationChanges = async (submissions: AnyContribution[]) => {
         const start = Date.now();
@@ -706,7 +727,6 @@ export default () => {
         using idb = await toolbox.openIDB("history", "readwrite");
         const nom = await idb.get(id);
         const history = nom.statusHistory;
-        const oldStatus = history.length ? history[history.length - 1].status : null;
         const timestamp = Date.now();
         const newStatus = historyOnly ? nom.status : status;
         const newEntry = {
@@ -724,11 +744,6 @@ export default () => {
           statusHistory: history,
         });
         idb.commit();
-
-        const box = document.querySelector(".uwtnsh-dropdown");
-        if (box) {
-          addEventToHistoryDisplay(box, newEntry, oldStatus);
-        }
       };
 
       const importNSH = async () => {

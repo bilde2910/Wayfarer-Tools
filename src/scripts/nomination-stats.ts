@@ -17,7 +17,7 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "../core";
-import { untilTruthy, downloadAsFile, iterKeys, iterObject, makeChildNode } from "../utils";
+import { downloadAsFile, iterKeys, iterObject, makeChildNode } from "../utils";
 import { AnyContribution, ContributionStatus, ContributionType, EditContribution, RejectReason, SubmissionsResult } from "../types";
 
 import "./nomination-stats.css";
@@ -65,17 +65,12 @@ export default () => {
         addExportButtons(makeChildNode(container, "div"), nominations);
       };
 
-      const addButton = async () => {
-        const body = await untilTruthy(() => document.body);
-        if (document.getElementById("uwtns-button")) return;
-        const button = makeChildNode(body, "button") as HTMLButtonElement;
-        button.id = "uwtns-button";
-        button.type = "button";
-        button.title = "Nomination stats";
-        button.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"11\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"14\"/></svg>";
-        button.addEventListener("click", () => { void openStatsWindow(); });
-      };
-      void addButton();
+      // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+      toolbox.addMenuItem("nomination-stats", {
+        label: "Nomination stats",
+        icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"11\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"14\"/></svg>",
+        callback: () => { void openStatsWindow(); },
+      });
 
       toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", (data: SubmissionsResult) => {
         if (data && data.submissions) nominations = data.submissions;

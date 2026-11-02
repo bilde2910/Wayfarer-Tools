@@ -17,7 +17,7 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { NumericInputEditor, register } from "../core";
-import { untilTruthy, weightNumericArray, DrawnS2Grid, addS2Overlay, makeChildNode, uwtGoogle, uwtPageWin } from "../utils";
+import { weightNumericArray, DrawnS2Grid, addS2Overlay, makeChildNode, uwtGoogle, uwtPageWin } from "../utils";
 import { AnyContribution, ContributionStatus, SubmissionsResult } from "../types";
 
 import { Cluster, ClusterStats, Marker, MarkerClusterer, Renderer } from "@googlemaps/markerclusterer";
@@ -68,7 +68,6 @@ export default () => {
       const parseContributions = (data: SubmissionsResult) => {
         if (!data || !data.submissions) return;
         nominations = data.submissions;
-        updateButtonLabel();
         if (redraw) void redraw(true);
       };
 
@@ -86,21 +85,12 @@ export default () => {
       const prettyStatus = (st: string) =>
         String(st || "UNKNOWN").toLowerCase().replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
 
-      let button: HTMLButtonElement | null = null;
-      const updateButtonLabel = () => {
-        if (button) button.title = nominations ? `Nomination map (${nominations.length} nominations)` : "Nomination map";
-      };
-
       const ensureStyle = () => {
         if (document.getElementById("uwtnm-style2")) return;
         const st = document.createElement("style");
         st.id = "uwtnm-style2";
         st.textContent = `
 
-        #uwtnm-button{position:fixed;left:16px;bottom:64px;z-index:99990;width:40px;height:40px;border-radius:50%;
-        border:1px solid rgba(128,128,128,.5);background:#111827;color:#f9fafb;cursor:pointer;display:flex;
-        align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;opacity:.75}
-        #uwtnm-button:hover{opacity:1}
         .uwtnm-modal{background:#fff !important;color:#111827 !important;max-width:none !important;max-height:none !important;
         width:calc(100vw - 50px);height:calc(100vh - 50px);overflow:hidden !important;display:flex;flex-direction:column;box-sizing:border-box}
         .uwtnm-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}
@@ -169,7 +159,6 @@ export default () => {
               return false;
             }
           }
-          updateButtonLabel();
           return true;
         };
 
@@ -283,19 +272,12 @@ export default () => {
         await build();
       };
 
-      const addButton = async () => {
-        await untilTruthy(() => document.body);
-        if (document.getElementById("uwtnm-button")) return;
-        ensureStyle();
-        button = document.createElement("button");
-        button.id = "uwtnm-button";
-        button.type = "button";
-        button.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"></path><circle cx=\"12\" cy=\"10\" r=\"2.5\"></circle></svg>";
-        button.addEventListener("click", () => { void openMapWindow(); });
-        document.body.appendChild(button);
-        updateButtonLabel();
-      };
-      void addButton();
+      // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+      toolbox.addMenuItem("nomination-map", {
+        label: "Nomination map",
+        icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"></path><circle cx=\"12\" cy=\"10\" r=\"2.5\"></circle></svg>",
+        callback: () => { void openMapWindow(); },
+      });
 
       toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", parseContributions);
     },

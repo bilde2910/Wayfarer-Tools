@@ -121,7 +121,9 @@ export default () => {
         circles: google.maps.Circle[],
         overlay: S2Overlay | null,
         idleListener: google.maps.MapsEventListener | null,
-      } = { circles: [], overlay: null, idleListener: null };
+        mapDiv: HTMLElement | null,
+        watcher: number | null,
+      } = { circles: [], overlay: null, idleListener: null, mapDiv: null, watcher: null };
 
       const pdoc = () => uwtPageWin.document;
 
@@ -151,18 +153,33 @@ export default () => {
         return null;
       };
 
-      const rmmSelectors = {
-        NEW: uwtReviewMapSelectors.NEW,
-        EDIT: "[data-testid=\"review-edit-flow\"] .wf-review-card--map [data-testid=\"base-map-container\"]",
+      // Tried in order. Edit reviews: the location edit card's map, then the "live map" slot (the one Open In
+      // places its buttons below), then any map in the edit flow.
+      const rmmSelectors: Record<"NEW" | "EDIT", string[]> = {
+        NEW: [uwtReviewMapSelectors.NEW],
+        EDIT: [
+          "[data-testid=\"review-edit-flow\"] .wf-review-card--map [data-testid=\"base-map-container\"]",
+          uwtReviewMapSelectors.EDIT,
+          "[data-testid=\"review-edit-flow\"] [data-testid=\"base-map-container\"]",
+        ],
+      };
+
+      const rmmFindMapNow = (type: "NEW" | "EDIT") => {
+        const list = rmmSelectors[type];
+        for (let i = 0; i < list.length; i++) {
+          const container = pdoc().querySelector<HTMLElement>(list[i]);
+          if (container) {
+            const map = rmmResolveMap(container);
+            if (map) return { container, map, selectorIndex: i };
+          }
+        }
+        return null;
       };
 
       const rmmWaitForMap = async (type: "NEW" | "EDIT") => {
         for (let i = 0; i < 120; i++) { // about 30 seconds
-          const container = pdoc().querySelector<HTMLElement>(rmmSelectors[type]);
-          if (container) {
-            const map = rmmResolveMap(container);
-            if (map) return { container, map };
-          }
+          const found = rmmFindMapNow(type);
+          if (found) return found;
           await new Promise(r => setTimeout(r, 250));
         }
         return null;
@@ -192,6 +209,11 @@ export default () => {
           try { rmm.idleListener.remove(); } catch { /* ignore */ }
           rmm.idleListener = null;
         }
+        if (rmm.watcher !== null) {
+          window.clearInterval(rmm.watcher);
+          rmm.watcher = null;
+        }
+        rmm.mapDiv = null;
         for (const el of pdoc().querySelectorAll(".uwtrmm-warning-box, .uwtrmm-close-warning")) el.remove();
         unloadPano();
       };
@@ -266,8 +288,12 @@ export default () => {
       };
 
       const addMapMods = async (candidate: AnyReview) => {
-        if (candidate.type !== "NEW" && !(candidate.type === "EDIT" && candidate.locationEdits && candidate.locationEdits.length > 0)) return;
+        // Every new review invalidates the previous one, also reviews that get no map mods: a skipped review does not
+        // submit anything, and the map object is reused, so its grid and circles (and a wait for its map that is
+        // still running) must not carry over to this review.
         const myToken = ++rmmToken;
+        rmmCleanup();
+        if (candidate.type !== "NEW" && !(candidate.type === "EDIT" && candidate.locationEdits && candidate.locationEdits.length > 0)) return;
 
         for (let i = 0; i < 100 && !(uwtPageWin.google && uwtPageWin.google.maps); i++) {
           await new Promise(r => setTimeout(r, 200));
@@ -283,8 +309,10 @@ export default () => {
           return;
         }
         if (myToken !== rmmToken) return; // a newer review has started
-        const { container, map } = found;
+        const { container, map, selectorIndex } = found;
+        logger.info(`Review Map Mods: found the ${candidate.type} review map (selector ${selectorIndex + 1} of ${rmmSelectors[candidate.type].length})`);
         rmmCleanup();
+        rmm.mapDiv = map.getDiv();
 
         if (candidate.type === "NEW") await modifyNewReviewMap(container, map, candidate);
         if (myToken !== rmmToken) return;
@@ -316,11 +344,23 @@ export default () => {
           });
         }
 
+        // The page may create a new map object while the review is open (for example when it switches between
+        // steps of an edit review). The one we decorated is then gone, so apply everything again to the new one.
+        rmm.watcher = window.setInterval(() => {
+          if (myToken !== rmmToken) return;
+          const live = rmmFindMapNow(candidate.type as "NEW" | "EDIT");
+          if (live && rmm.mapDiv && live.map.getDiv() !== rmm.mapDiv) {
+            logger.info("Review Map Mods: the review map was re-created; applying the mods again");
+            void addMapMods(candidate);
+          }
+        }, 1500);
+
         if (Number.isFinite(candidate.lat) && Number.isFinite(candidate.lng)) {
           // 22 m: new Powerspots within this distance of another Wayspot are rejected
           if (config.get("renderCloseCircle")) drawCircle(map, candidate, "blue", 22);
           // 2 m: a moved location must be at least this far from the submitter's proposal
-          if (config.get("renderMoveCircle")) drawCircle(map, candidate, "red", 2);
+          // (not for edit reviews: there the reviewer picks one of the suggested locations, nothing is moved)
+          if (config.get("renderMoveCircle") && candidate.type === "NEW") drawCircle(map, candidate, "red", 2);
 
           // only NEW reviews declare nearbyPortals in the types, but read it defensively for any review
           const nearbyPortals = (candidate as Partial<NewReview>).nearbyPortals;

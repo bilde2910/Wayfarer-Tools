@@ -1,0 +1,102 @@
+.uwtnc-modal {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #fff !important;
+  color: #111827 !important;
+  font-size: 15px;
+  width: min(1000px, calc(100vw - 50px));
+  height: min(720px, calc(100vh - 50px));
+  max-width: none !important;
+  max-height: none !important;
+}
+
+.uwtnc-modal.uwt-dark {
+  background: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.uwtnc-modal h2 {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 0.6rem;
+}
+
+.uwtnc-modal .uwtnc-x {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  font-size: 26px;
+  cursor: pointer;
+  opacity: 0.6;
+  background: none;
+  border: 0;
+  color: inherit;
+}
+
+.uwtnc-modal .uwtnc-x:hover {
+  opacity: 1;
+}
+
+.uwtnc-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  gap: 8px;
+}
+
+.uwtnc-help {
+  opacity: 0.8;
+}
+
+.uwtnc-body input {
+  border: 1px solid #9ca3af;
+  border-radius: 4px;
+  padding: 4px 8px;
+  background: #fff;
+  color: #111827;
+}
+
+.uwtnc-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.uwtnc-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.uwtnc-table th {
+  position: sticky;
+  top: 0;
+  text-align: left;
+  background: inherit;
+  border-bottom: 2px solid rgba(128, 128, 128, 0.6);
+  padding: 4px 6px;
+}
+
+.uwtnc-modal .uwtnc-table th {
+  background: #fff;
+}
+
+.uwtnc-modal.uwt-dark .uwtnc-table th {
+  background: #1f2937;
+}
+
+.uwtnc-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+
+.uwtnc-coordinates {
+  cursor: pointer;
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.uwtnc-coordinates:hover {
+  text-decoration: underline;
+}

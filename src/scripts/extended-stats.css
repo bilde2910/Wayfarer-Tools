@@ -1,15 +1,63 @@
+/* redesign: window for the extended profile stats */
+.uwtes-modal {
+  position: relative;
+  background: #fff !important;
+  color: #111827 !important;
+  font-size: 15px;
+  width: min(560px, calc(100vw - 50px));
+}
+
+.uwtes-modal.uwt-dark {
+  background: #1f2937 !important;
+  color: #f9fafb !important;
+}
+
+.uwtes-modal h2 {
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 0.8rem;
+}
+
+.uwtes-modal .uwtes-x {
+  position: absolute;
+  top: 8px;
+  right: 14px;
+  font-size: 26px;
+  cursor: pointer;
+  opacity: 0.6;
+  background: none;
+  border: 0;
+  color: inherit;
+}
+
+.uwtes-modal .uwtes-x:hover {
+  opacity: 1;
+}
+
+.uwtes-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.uwtes-table td {
+  padding: 6px 4px;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.3);
+}
+
 .uwftes-text {
-  font-size: 18px;
+  font-size: 16px;
 }
 
 .uwftes-count {
-  font-size: 18px;
-  display: flex;
-  margin: 0px 0px 0px 0px;
+  font-size: 16px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
-.uwftes-parent {
-  display: flex;
-  justify-content: space-between;
-  margin: 16px 0px 0px;
+.uwtes-extended td {
+  font-weight: bold;
+}
+
+.uwtes-copy {
+  margin-top: 16px;
 }

@@ -559,6 +559,13 @@ interface SidebarMenuItem {
   callback: () => void,
 }
 
+/** An entry in the Wayfarer Tools menu. `icon` is either SVG markup or an image URL. */
+interface MenuItem {
+  label: string,
+  icon: string,
+  callback: () => void,
+}
+
 interface Importer {
   title: string,
   description: string,
@@ -569,34 +576,16 @@ interface Importer {
 // ---- redesign: addons can add sections (e.g. the list of active plugins) at the top of the settings window ----
 const settingsSections: ((box: HTMLElement) => void)[] = [];
 
-const sidebarItems: Record<string, SidebarMenuItem> = {};
+// ---- redesign: the old sidebar (app-sidebar-link) is gone. Sidebar items and addon menu items are all
+// shown in the Wayfarer Tools menu, opened with the button at the bottom left (see uwtAddLauncher) ----
+const menuItems: Record<string, MenuItem> = {};
 const importers: Importer[] = [];
 
-const createSidebarItems = (sidebar: Node) => {
-  for (const [id, item] of iterObject(sidebarItems)) {
-    const elId = `uwftcore-sidebar-item-${id}`;
-    if (document.getElementById(elId) === null) {
-      const div = makeChildNode(sidebar, "div");
-      div.id = elId;
-      const anchor = makeChildNode(div, "a");
-      anchor.classList.add("sidebar-link");
-      anchor.title = item.label;
-      anchor.addEventListener("click", () => item.callback());
-      const img = makeChildNode(anchor, "img") as HTMLImageElement;
-      img.classList.add("sidebar-link__icon", "uwftcore-sidebar-icon");
-      img.src = item.imageUrl;
-      makeChildNode(anchor, "span", item.label);
-    }
+const addSidebarItem = (id: string, item: SidebarMenuItem) => {
+  if (id in menuItems) {
+    throw new Error(`Tried to add already existing menu item ${id}`);
   }
-};
-
-const addSidebarItem = async (id: string, item: SidebarMenuItem) => {
-  if (id in sidebarItems) {
-    throw new Error(`Tried to add already existing sidebar item ${id}`);
-  }
-  sidebarItems[id] = item;
-  const sidebar = await untilTruthy(() => document.querySelector("app-sidebar-link"));
-  createSidebarItems(sidebar.parentNode!);
+  menuItems[id] = { label: item.label, icon: item.imageUrl, callback: item.callback };
 };
 
 function makeRequest<Tm extends "GET", Tu extends keyof Responses[Tm] & string>(method: Tm, url: Tu): Promise<Responses[Tm][Tu]>;
@@ -880,7 +869,12 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
   }
 
   public addSidebarItem(id: string, item: SidebarMenuItem) {
-    void addSidebarItem(`addon-${this.#addon.id}-${id}`, item);
+    addSidebarItem(`addon-${this.#addon.id}-${id}`, item);
+  }
+
+  /** Adds an entry to the Wayfarer Tools menu (the button at the bottom left). */
+  public addMenuItem(id: string, item: MenuItem) {
+    menuItems[`addon-${this.#addon.id}-${id}`] = item;
   }
 
   public async createModal(...cssClasses: string[]) {
@@ -897,8 +891,8 @@ class AddonToolbox<Tcfg, Tidb extends IDBStoreDeclaration<Tidb>, Tsess> {
 
   public addImporter(importer: Importer) {
     importers.push(importer);
-    if (!("core-importer" in sidebarItems)) {
-      void addSidebarItem("core-importer", {
+    if (!("core-importer" in menuItems)) {
+      addSidebarItem("core-importer", {
         imageUrl: ImportIcon,
         label: "Import Data",
         callback: async () => {
@@ -1045,7 +1039,7 @@ export const initializeAllAddons = () => {
       "GET", "/api/v1/vault/settings",
       renderEditors(Object.values(options)),
     );
-    uwtAddSettingsButton(Object.values(options));
+    uwtAddLauncher(Object.values(options));
   }
   logger.info("Addon initialization done.");
 };
@@ -1062,17 +1056,31 @@ const renderEditors = (options: AddonOptionsEntry[]) => async () => {
   uwtFillSettingsPane(box, options);
 };
 
-// ---- redesign patch: the redesigned site has no settings page to hook, so show a floating button ----
-function uwtAddSettingsButton(options: AddonOptionsEntry[]) {
-  if (document.getElementById("uwt-settings-button")) return;
+// ---- redesign: one button at the bottom left opens the Wayfarer Tools menu. It lists the entries addons
+// add (toolbox.addMenuItem / addSidebarItem / addImporter) and, last, the settings window. ----
+const UWT_TOOLS_ICON = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z\"/></svg>";
+const UWT_SETTINGS_ICON = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z\"></path></svg>";
+
+function uwtMakeMenuItem(parent: HTMLElement, item: MenuItem) {
+  const button = makeChildNode(parent, "button") as HTMLButtonElement;
+  button.type = "button";
+  button.className = "uwt-menu-item";
+  const icon = makeChildNode(button, "span");
+  icon.className = "uwt-menu-icon";
+  if (item.icon.trimStart().startsWith("<svg")) {
+    icon.innerHTML = item.icon;
+  } else {
+    (makeChildNode(icon, "img") as HTMLImageElement).src = item.icon;
+  }
+  makeChildNode(button, "span", item.label);
+  return button;
+}
+
+async function uwtOpenSettingsWindow(options: AddonOptionsEntry[]) {
   if (!document.getElementById("uwt-settings-style")) {
     const st = document.createElement("style");
     st.id = "uwt-settings-style";
     st.textContent = `
-      #uwt-settings-button{position:fixed;left:16px;bottom:16px;z-index:99990;width:40px;height:40px;border-radius:50%;
-        border:1px solid rgba(128,128,128,.5);background:#111827;color:#f9fafb;cursor:pointer;display:flex;
-        align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;opacity:.75}
-      #uwt-settings-button:hover{opacity:1}
       .uwt-settings-modal{background:#fff !important;color:#111827 !important;font-size:15px}
       .uwt-settings-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}
       .uwt-settings-modal .uwt-settings-close{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}
@@ -1084,36 +1092,232 @@ function uwtAddSettingsButton(options: AddonOptionsEntry[]) {
         border:1px solid #9ca3af;border-radius:4px;padding:2px 6px;background:#fff;color:#111827}`;
     document.head.appendChild(st);
   }
-  const btn = document.createElement("button");
-  btn.id = "uwt-settings-button";
-  btn.type = "button";
-  btn.title = "Wayfarer Tools settings";
-  btn.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z\"></path></svg>";
-  btn.addEventListener("click", async () => {
-    const { container, dismiss } = await new AddonToolbox({} as any).createModal("uwt-settings-modal");
-    if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
-      container.classList.add("uwt-dark");
+  const { container, dismiss } = await new AddonToolbox({} as any).createModal("uwt-settings-modal");
+  if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+    container.classList.add("uwt-dark");
+  }
+  container.style.width = "min(900px, calc(100vw - 50px))";
+  container.style.height = "min(720px, calc(100vh - 50px))";
+  container.style.maxHeight = "none";
+  const close = makeChildNode(container, "button", "\u00d7");
+  close.className = "uwt-settings-close";
+  close.addEventListener("click", dismiss);
+  makeChildNode(container, "h2", "Wayfarer Tools settings");
+  makeChildNode(container, "p", "Changes are saved immediately. Reload the page for newly enabled or disabled addons to take effect.").style.marginBottom = "1rem";
+  const box = makeChildNode(container, "div");
+  box.id = "uwftoolsMainPluginSettingsPane";
+  for (const render of settingsSections) {
+    try {
+      render(makeChildNode(box, "div"));
+    } catch (e) {
+      new Logger("core:settings").error(e);
     }
-    container.style.width = "min(900px, calc(100vw - 50px))";
-    container.style.height = "min(720px, calc(100vh - 50px))";
-    container.style.maxHeight = "none";
-    const close = makeChildNode(container, "button", "\u00d7");
-    close.className = "uwt-settings-close";
-    close.addEventListener("click", dismiss);
-    makeChildNode(container, "h2", "Wayfarer Tools settings");
-    makeChildNode(container, "p", "Changes are saved immediately. Reload the page for newly enabled or disabled addons to take effect.").style.marginBottom = "1rem";
-    const box = makeChildNode(container, "div");
-    box.id = "uwftoolsMainPluginSettingsPane";
-    for (const render of settingsSections) {
+  }
+  uwtFillSettingsPane(box, options);
+}
+
+// ---- redesign: diagnostic. Writes an outline of the page's current structure (data-testid values, roles,
+// control labels, custom elements) so that addons that change the review pages can be written against the
+// real markup. Text content is not included, except for the labels of buttons, headings and similar controls. ----
+const UWT_REPORT_SKIP = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "LINK", "META", "TEMPLATE", "PATH", "BR", "HR"]);
+const UWT_REPORT_STRUCT = new Set([
+  "BUTTON", "A", "INPUT", "SELECT", "TEXTAREA", "LABEL", "H1", "H2", "H3", "H4", "H5", "H6", "IMG", "VIDEO", "CANVAS",
+  "IFRAME", "FORM", "DIALOG", "TABLE", "UL", "OL", "LI", "NAV", "MAIN", "HEADER", "FOOTER", "SECTION", "ARTICLE",
+  "ASIDE", "SUMMARY", "DETAILS", "FIELDSET", "LEGEND", "OPTION", "SVG",
+]);
+const UWT_REPORT_LABELLED = new Set(["BUTTON", "A", "LABEL", "H1", "H2", "H3", "H4", "H5", "H6", "LEGEND", "SUMMARY", "OPTION"]);
+const UWT_REPORT_ROLES = new Set(["button", "tab", "radio", "checkbox", "menuitem", "option", "switch", "link"]);
+
+function uwtIsOwnUi(el: Element) {
+  return /(^|\s)(uwt|uwf)/.test(el.id) || /(^|\s)(uwt|uwf)/.test(el.getAttribute("class") ?? "");
+}
+
+function uwtPageReport(): string {
+  const MAX_LINES = 900;
+  const lines: string[] = [];
+  const testIds = new Map<string, number>();
+  const customTags = new Map<string, number>();
+  const clip = (t: string, n: number) => (t.length > n ? `${t.slice(0, n)}...` : t);
+  const labelText = (el: Element) => (el.textContent ?? "").trim().replace(/\s+/g, " ");
+
+  const describe = (el: Element) => {
+    const tag = el.tagName.toLowerCase();
+    const parts = [tag];
+    const attr = (name: string, label = name) => {
+      const v = el.getAttribute(name);
+      if (v) parts.push(`${label}="${clip(v, 60)}"`);
+    };
+    attr("id");
+    attr("data-testid");
+    attr("role");
+    attr("aria-label");
+    attr("type");
+    attr("name");
+    attr("placeholder");
+    attr("aria-checked");
+    attr("aria-expanded");
+    attr("aria-selected");
+    if ((el as HTMLButtonElement).disabled) parts.push("disabled");
+    const cls = el.getAttribute("class");
+    if (cls && el.tagName !== "svg") parts.push(`class="${clip(cls.trim().replace(/\s+/g, " "), 100)}"`);
+    if (el instanceof HTMLImageElement && el.src) {
       try {
-        render(makeChildNode(box, "div"));
-      } catch (e) {
-        new Logger("core:settings").error(e);
-      }
+        parts.push(`src-host=${new URL(el.src, location.href).hostname}`);
+      } catch { /* ignore */ }
     }
-    uwtFillSettingsPane(box, options);
+    const role = el.getAttribute("role") ?? "";
+    if (UWT_REPORT_LABELLED.has(el.tagName) || UWT_REPORT_ROLES.has(role)) {
+      const t = labelText(el);
+      if (t) parts.push(`text="${clip(t, 50)}"`);
+    } else {
+      let own = 0;
+      for (const n of Array.from(el.childNodes)) if (n.nodeType === Node.TEXT_NODE) own += (n.textContent ?? "").trim().length;
+      if (own > 0) parts.push(`own-text(${own} chars)`);
+    }
+    return parts.join(" ");
+  };
+
+  const hasOwnText = (el: Element) =>
+    Array.from(el.childNodes).some(n => n.nodeType === Node.TEXT_NODE && (n.textContent ?? "").trim().length > 0);
+
+  const interesting = (el: Element) =>
+    el.hasAttribute("data-testid") || !!el.id || el.hasAttribute("role") || el.hasAttribute("aria-label") ||
+    UWT_REPORT_STRUCT.has(el.tagName.toUpperCase()) || el.tagName.includes("-") || hasOwnText(el);
+
+  const signature = (el: Element) =>
+    `${el.tagName}|${el.getAttribute("data-testid") ?? ""}|${el.getAttribute("role") ?? ""}|${(el.getAttribute("class") ?? "").slice(0, 40)}`;
+
+  const walk = (el: Element, depth: number) => {
+    if (lines.length >= MAX_LINES || depth > 16) return;
+    const upper = el.tagName.toUpperCase();
+    if (UWT_REPORT_SKIP.has(upper) || uwtIsOwnUi(el)) return;
+    const show = interesting(el);
+    if (show) {
+      lines.push(`${"  ".repeat(depth)}${describe(el)}`);
+      const tid = el.getAttribute("data-testid");
+      if (tid) testIds.set(tid, (testIds.get(tid) ?? 0) + 1);
+      if (el.tagName.includes("-")) customTags.set(el.tagName.toLowerCase(), (customTags.get(el.tagName.toLowerCase()) ?? 0) + 1);
+      if (upper === "SVG") return;
+    }
+    // labelled controls are described by their text already; only look inside them for further controls
+    let previous = "";
+    let repeats = 0;
+    const children = Array.from(el.children);
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      const sig = signature(child);
+      if (sig === previous) {
+        repeats++;
+        if (repeats >= 2 && interesting(child)) {
+          // collapse long runs of identical siblings (list rows and the like)
+          let j = i;
+          while (j + 1 < children.length && signature(children[j + 1]) === sig) j++;
+          if (j > i || repeats >= 2) {
+            lines.push(`${"  ".repeat(depth + (show ? 1 : 0))}... (+${j - i + 1} similar ${child.tagName.toLowerCase()})`);
+            i = j;
+            continue;
+          }
+        }
+      } else {
+        previous = sig;
+        repeats = 0;
+      }
+      walk(child, depth + (show ? 1 : 0));
+    }
+  };
+
+  walk(document.body, 0);
+
+  const header = [
+    "Wayfarer Tools page structure report",
+    `page: ${location.pathname}`,
+    `title: ${document.title}`,
+    `viewport: ${window.innerWidth}x${window.innerHeight} | dark mode: ${document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")}`,
+    `data-testid values: ${Array.from(testIds.entries()).map(([k, v]) => (v > 1 ? `${k} (x${v})` : k)).join(", ") || "none"}`,
+    `custom elements: ${Array.from(customTags.entries()).map(([k, v]) => `${k} (x${v})`).join(", ") || "none"}`,
+    `open dialogs: ${document.querySelectorAll("dialog[open], [role=dialog], [aria-modal=true]").length}`,
+    lines.length >= MAX_LINES ? `(outline cut off after ${MAX_LINES} lines)` : "",
+    "----",
+  ].filter(Boolean);
+  return `${header.join("\n")}\n${lines.join("\n")}\n`;
+}
+
+async function uwtShowPageReport() {
+  const report = uwtPageReport();
+  const { container, dismiss } = await new AddonToolbox({} as any).createModal("uwt-report-modal");
+  const close = makeChildNode(container, "button", "\u00d7");
+  close.className = "uwt-report-close";
+  close.addEventListener("click", dismiss);
+  makeChildNode(container, "h2", "Page structure report");
+  makeChildNode(container, "p", "An outline of the structure of the page you are on. It contains element names, test ids and the labels of buttons and headings, but no other page text and no input values. Copy it and share it so that addons can be adapted to this page.");
+  const area = makeChildNode(container, "textarea") as HTMLTextAreaElement;
+  area.className = "uwt-report-text";
+  area.readOnly = true;
+  area.value = report;
+  const copy = makeChildNode(container, "button", "Copy to clipboard");
+  copy.className = "uwftcore-ui-button";
+  copy.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(report);
+      copy.textContent = "Copied!";
+    } catch {
+      area.select();
+      copy.textContent = "Select the text and copy it";
+    }
   });
-  document.body.appendChild(btn);
+}
+
+function uwtAddLauncher(options: AddonOptionsEntry[]) {
+  if (document.getElementById("uwt-menu-button")) return;
+  menuItems["core-page-report"] = {
+    label: "Page structure report",
+    icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>",
+    callback: () => { void uwtShowPageReport(); },
+  };
+  const btn = document.createElement("button");
+  btn.id = "uwt-menu-button";
+  btn.type = "button";
+  btn.title = "Wayfarer Tools";
+  btn.innerHTML = UWT_TOOLS_ICON;
+
+  const menu = document.createElement("div");
+  menu.id = "uwt-menu";
+  menu.hidden = true;
+
+  const closeMenu = () => {
+    menu.hidden = true;
+    btn.classList.remove("uwt-open");
+  };
+  // rebuilt each time it opens, so entries added by addons after startup are included
+  const openMenu = () => {
+    menu.innerHTML = "";
+    const items = Object.values(menuItems).sort((a, b) => a.label.localeCompare(b.label));
+    for (const item of items) {
+      uwtMakeMenuItem(menu, item).addEventListener("click", () => {
+        closeMenu();
+        item.callback();
+      });
+    }
+    if (items.length > 0) makeChildNode(menu, "div").className = "uwt-menu-sep";
+    uwtMakeMenuItem(menu, { label: "Settings", icon: UWT_SETTINGS_ICON, callback: () => undefined }).addEventListener("click", () => {
+      closeMenu();
+      void uwtOpenSettingsWindow(options);
+    });
+    menu.hidden = false;
+    btn.classList.add("uwt-open");
+  };
+
+  btn.addEventListener("click", () => {
+    if (menu.hidden) openMenu();
+    else closeMenu();
+  });
+  document.addEventListener("click", (e) => {
+    if (!menu.hidden && !menu.contains(e.target as Node) && !btn.contains(e.target as Node)) closeMenu();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeMenu();
+  });
+  document.body.append(menu, btn);
 }
 
 function uwtFillSettingsPane(box: HTMLElement, options: AddonOptionsEntry[]) {

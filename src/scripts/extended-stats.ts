@@ -17,7 +17,7 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { DiscordUserLinkEditor, NumericInputEditor, register, SelectBoxEditor } from "../core";
-import { untilTruthy, insertAfter, makeChildNode } from "../utils";
+import { makeChildNode } from "../utils";
 import { DiscordUserLink, Profile } from "../types";
 
 import "./extended-stats.css";
@@ -95,41 +95,71 @@ export default () => {
         }),
       });
 
-      const parseStats = async (profile: Profile) => {
-        const parentRef = await untilTruthy(() => document.querySelector(".wf-profile-stats__section-title"));
+      // ---- redesign: the Profile page (wf-profile-stats__section-title, wf-credibility-card) the extra stats and
+      // the Copy Stats button used to be added to is gone. They are now shown in a window opened from the
+      // Wayfarer Tools menu. Auto-submitting to WDD no longer waits for the page, only for the profile data.
+      let profile: Profile | null = null;
 
-        const allAgreements = getTotalAgreementCount(profile) || profile.accepted + profile.rejected + profile.duplicated;
-        const percent = ((allAgreements / profile.finished) * 100).toFixed(1);
-        const otherAgreements = allAgreements - profile.accepted - profile.rejected - profile.duplicated;
-
-        const totalParent = document.createElement("div");
-        totalParent.classList.add("uwftes-parent");
-        makeChildNode(totalParent, "div", "Processed & Agreement").classList.add("uwftes-text");
-        makeChildNode(totalParent, "div", `${allAgreements} (${percent}%)`).classList.add("uwftes-count");
-        insertAfter(parentRef, totalParent);
-
-        const otherParent = document.createElement("div");
-        otherParent.classList.add("uwftes-parent");
-        makeChildNode(otherParent, "div", "Other Agreements").classList.add("uwftes-text");
-        makeChildNode(otherParent, "div", otherAgreements.toString()).classList.add("uwftes-count");
-        insertAfter(parentRef.parentElement!.lastChild!, otherParent);
-
-        const exportParent = document.createElement("div");
-        exportParent.classList.add("uwftes-parent");
-        makeChildNode(exportParent, "br");
-        const exportButton = makeChildNode(exportParent, "button", "Copy Stats");
-        exportButton.classList.add("uwftcore-ui-button");
-        exportButton.addEventListener("click", async () => {
-          const exportData = makeStats(profile);
-          await navigator.clipboard.writeText(JSON.stringify(exportData));
-          alert("Stats copied to clipboard!");
-        });
-
-        const credCard = await untilTruthy(() => document.querySelector("wf-credibility-card"));
-        credCard.parentNode!.appendChild(exportParent);
-
+      const handleProfile = (p: Profile) => {
+        profile = p;
         const wddLink = config.get("wddClippyLink");
-        if (wddLink) sendToKingClippy(profile, wddLink);
+        if (wddLink) sendToKingClippy(p, wddLink);
+      };
+
+      const openStatsWindow = async () => {
+        const { container, dismiss } = await toolbox.createModal("uwtes-modal");
+        if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+          container.classList.add("uwt-dark");
+        }
+        const close = makeChildNode(container, "button", "\u00d7");
+        close.className = "uwtes-x";
+        close.addEventListener("click", dismiss);
+        makeChildNode(container, "h2", "Extended stats");
+        const body = makeChildNode(container, "div");
+
+        if (profile === null) {
+          makeChildNode(body, "p", "Loading profile...");
+          try {
+            profile = await toolbox.makeRequest("GET", "/api/v1/vault/profile");
+          } catch (e) {
+            logger.error(e);
+          }
+          body.innerHTML = "";
+        }
+        const p = profile;
+        if (p === null) {
+          makeChildNode(body, "p", "Could not load your profile.");
+          return;
+        }
+
+        const allAgreements = getTotalAgreementCount(p) || p.accepted + p.rejected + p.duplicated;
+        const percent = p.finished > 0 ? ((allAgreements / p.finished) * 100).toFixed(1) : "-";
+        const otherAgreements = allAgreements - p.accepted - p.rejected - p.duplicated;
+
+        const table = makeChildNode(body, "table");
+        table.className = "uwtes-table";
+        const rows: [string, string, boolean][] = [
+          ["Processed", p.finished.toString(), false],
+          ["Accepted", p.accepted.toString(), false],
+          ["Rejected", p.rejected.toString(), false],
+          ["Duplicates", p.duplicated.toString(), false],
+          ["Processed & Agreement", `${allAgreements} (${percent}%)`, true],
+          ["Other Agreements", otherAgreements.toString(), true],
+        ];
+        for (const [label, value, extended] of rows) {
+          const row = makeChildNode(table, "tr");
+          makeChildNode(row, "td", label).classList.add("uwftes-text");
+          makeChildNode(row, "td", value).classList.add("uwftes-count");
+          if (extended) row.classList.add("uwtes-extended");
+        }
+
+        const exportButton = makeChildNode(body, "button", "Copy Stats");
+        exportButton.classList.add("uwftcore-ui-button", "uwtes-copy");
+        exportButton.addEventListener("click", async () => {
+          await navigator.clipboard.writeText(JSON.stringify(makeStats(p)));
+          exportButton.textContent = "Stats copied to clipboard!";
+          setTimeout(() => { exportButton.textContent = "Copy Stats"; }, 2000);
+        });
       };
 
       const getTotalAgreementCount = (stats: Profile) => {
@@ -199,7 +229,14 @@ export default () => {
         }));
       };
 
-      toolbox.interceptOpenJson("GET", "/api/v1/vault/profile", parseStats);
+      // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+      toolbox.addMenuItem("extended-stats", {
+        label: "Extended stats",
+        icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 18 12 15 21 9 3 6 12 2 12\"/></svg>",
+        callback: () => { void openStatsWindow(); },
+      });
+
+      toolbox.interceptOpenJson("GET", "/api/v1/vault/profile", handleProfile);
     },
   });
 };

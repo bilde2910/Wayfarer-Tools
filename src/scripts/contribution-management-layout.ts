@@ -17,7 +17,7 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, register } from "../core";
-import { untilTruthy, makeChildNode, uwtGoogle } from "../utils";
+import { makeChildNode, uwtGoogle } from "../utils";
 import { AnyContribution, AnyEditContribution, ContributionStatus, ContributionType, EditContributionType, SubmissionsResult } from "../types";
 
 import "./contribution-management-layout.css";
@@ -359,17 +359,12 @@ export default () => {
         renderOverview(body, nominations);
       };
 
-      const addButton = async () => {
-        const body = await untilTruthy(() => document.body);
-        if (document.getElementById("uwtcml-button")) return;
-        const button = makeChildNode(body, "button") as HTMLButtonElement;
-        button.id = "uwtcml-button";
-        button.type = "button";
-        button.title = "Edits by Wayspot";
-        button.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z\"/></svg>";
-        button.addEventListener("click", () => { void openOverview(); });
-      };
-      void addButton();
+      // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+      toolbox.addMenuItem("contribution-management-layout", {
+        label: "Edits by Wayspot",
+        icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z\"/></svg>",
+        callback: () => { void openOverview(); },
+      });
 
       toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", (data: SubmissionsResult) => {
         if (data && data.submissions) nominations = data.submissions;

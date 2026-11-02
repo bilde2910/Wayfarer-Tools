@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name              Unified Wayfarer Tools
 // @namespace         https://github.com/Frankmans/Wayfarer-Tools
-// @version           1.1.0.158
+// @version           1.1.0.159
 // @description       Unofficial addons that add extra quality of life features to Scopely's project Wayfarer.
 // @homepageURL       https://github.com/Frankmans/Wayfarer-Tools#readme
 // @supportURL        https://github.com/Frankmans/Wayfarer-Tools/issues
 // @license           GPL-3.0-only
 // @author            bilde2910
 // @copyright         bilde2910 (https://github.com/bilde2910)
-// @icon              https://raw.githubusercontent.com/Frankmans/Wayfarer-Tools/redesign-port/resources/images/logo_48.png?b=fd80b78
+// @icon              https://raw.githubusercontent.com/Frankmans/Wayfarer-Tools/redesign-port/resources/images/logo_48.png?b=449462e
 // @match             https://wayfarer.scopely.com/*
 // @downloadURL       https://raw.githubusercontent.com/Frankmans/Wayfarer-Tools/redesign-port/dist/unified-wayfarer-tools.user.js
 // @updateURL         https://raw.githubusercontent.com/Frankmans/Wayfarer-Tools/redesign-port/dist/unified-wayfarer-tools.meta.js
@@ -16,7 +16,7 @@
 // @grant             GM.xmlHttpRequest
 // @grant             GM.openInTab
 // @noframes
-// @resource          geofences https://raw.githubusercontent.com/Frankmans/Wayfarer-Tools/redesign-port/resources/geofences.json?b=fd80b78
+// @resource          geofences https://raw.githubusercontent.com/Frankmans/Wayfarer-Tools/redesign-port/resources/geofences.json?b=449462e
 // @require           https://cdn.jsdelivr.net/npm/@googlemaps/markerclusterer@2.6.2/dist/index.min.js
 // @require           https://cdn.jsdelivr.net/npm/proj4@2.20.0/dist/proj4.js
 // @require           https://cdn.jsdelivr.net/npm/ag-grid-community@34.3.1/dist/ag-grid-community.min.js
@@ -1119,32 +1119,15 @@ const getNotificationDiv = () => {
 };
 // ---- redesign: addons can add sections (e.g. the list of active plugins) at the top of the settings window ----
 const settingsSections = [];
-const sidebarItems = {};
+// ---- redesign: the old sidebar (app-sidebar-link) is gone. Sidebar items and addon menu items are all
+// shown in the Wayfarer Tools menu, opened with the button at the bottom left (see uwtAddLauncher) ----
+const menuItems = {};
 const importers = [];
-const createSidebarItems = (sidebar) => {
-    for (const [id, item] of iterObject(sidebarItems)) {
-        const elId = `uwftcore-sidebar-item-${id}`;
-        if (document.getElementById(elId) === null) {
-            const div = makeChildNode(sidebar, "div");
-            div.id = elId;
-            const anchor = makeChildNode(div, "a");
-            anchor.classList.add("sidebar-link");
-            anchor.title = item.label;
-            anchor.addEventListener("click", () => item.callback());
-            const img = makeChildNode(anchor, "img");
-            img.classList.add("sidebar-link__icon", "uwftcore-sidebar-icon");
-            img.src = item.imageUrl;
-            makeChildNode(anchor, "span", item.label);
-        }
+const addSidebarItem = (id, item) => {
+    if (id in menuItems) {
+        throw new Error(`Tried to add already existing menu item ${id}`);
     }
-};
-const addSidebarItem = async (id, item) => {
-    if (id in sidebarItems) {
-        throw new Error(`Tried to add already existing sidebar item ${id}`);
-    }
-    sidebarItems[id] = item;
-    const sidebar = await untilTruthy(() => document.querySelector("app-sidebar-link"));
-    createSidebarItems(sidebar.parentNode);
+    menuItems[id] = { label: item.label, icon: item.imageUrl, callback: item.callback };
 };
 function makeRequest(method, url, body) {
     const logger = new Logger("core:toolbox");
@@ -1416,7 +1399,11 @@ class AddonToolbox {
         };
     }
     addSidebarItem(id, item) {
-        void addSidebarItem(`addon-${__classPrivateFieldGet(this, _AddonToolbox_addon, "f").id}-${id}`, item);
+        addSidebarItem(`addon-${__classPrivateFieldGet(this, _AddonToolbox_addon, "f").id}-${id}`, item);
+    }
+    /** Adds an entry to the Wayfarer Tools menu (the button at the bottom left). */
+    addMenuItem(id, item) {
+        menuItems[`addon-${__classPrivateFieldGet(this, _AddonToolbox_addon, "f").id}-${id}`] = item;
     }
     async createModal(...cssClasses) {
         const body = await untilTruthy(() => document.querySelector("body"));
@@ -1431,8 +1418,8 @@ class AddonToolbox {
     }
     addImporter(importer) {
         importers.push(importer);
-        if (!("core-importer" in sidebarItems)) {
-            void addSidebarItem("core-importer", {
+        if (!("core-importer" in menuItems)) {
+            addSidebarItem("core-importer", {
                 imageUrl: ImportIcon$1,
                 label: "Import Data",
                 callback: async () => {
@@ -1538,7 +1525,7 @@ const initializeAllAddons = () => {
         logger.info("Hooking settings editor...");
         const toolbox = new AddonToolbox({});
         toolbox.interceptOpenJson("GET", "/api/v1/vault/settings", renderEditors(Object.values(options)));
-        uwtAddSettingsButton(Object.values(options));
+        uwtAddLauncher(Object.values(options));
     }
     logger.info("Addon initialization done.");
 };
@@ -1554,18 +1541,30 @@ const renderEditors = (options) => async () => {
     header.classList.add("wf-page-header");
     uwtFillSettingsPane(box, options);
 };
-// ---- redesign patch: the redesigned site has no settings page to hook, so show a floating button ----
-function uwtAddSettingsButton(options) {
-    if (document.getElementById("uwt-settings-button"))
-        return;
+// ---- redesign: one button at the bottom left opens the Wayfarer Tools menu. It lists the entries addons
+// add (toolbox.addMenuItem / addSidebarItem / addImporter) and, last, the settings window. ----
+const UWT_TOOLS_ICON = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z\"/></svg>";
+const UWT_SETTINGS_ICON = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z\"></path></svg>";
+function uwtMakeMenuItem(parent, item) {
+    const button = makeChildNode(parent, "button");
+    button.type = "button";
+    button.className = "uwt-menu-item";
+    const icon = makeChildNode(button, "span");
+    icon.className = "uwt-menu-icon";
+    if (item.icon.trimStart().startsWith("<svg")) {
+        icon.innerHTML = item.icon;
+    }
+    else {
+        makeChildNode(icon, "img").src = item.icon;
+    }
+    makeChildNode(button, "span", item.label);
+    return button;
+}
+async function uwtOpenSettingsWindow(options) {
     if (!document.getElementById("uwt-settings-style")) {
         const st = document.createElement("style");
         st.id = "uwt-settings-style";
         st.textContent = `
-      #uwt-settings-button{position:fixed;left:16px;bottom:16px;z-index:99990;width:40px;height:40px;border-radius:50%;
-        border:1px solid rgba(128,128,128,.5);background:#111827;color:#f9fafb;cursor:pointer;display:flex;
-        align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;opacity:.75}
-      #uwt-settings-button:hover{opacity:1}
       .uwt-settings-modal{background:#fff !important;color:#111827 !important;font-size:15px}
       .uwt-settings-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}
       .uwt-settings-modal .uwt-settings-close{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}
@@ -1577,37 +1576,241 @@ function uwtAddSettingsButton(options) {
         border:1px solid #9ca3af;border-radius:4px;padding:2px 6px;background:#fff;color:#111827}`;
         document.head.appendChild(st);
     }
-    const btn = document.createElement("button");
-    btn.id = "uwt-settings-button";
-    btn.type = "button";
-    btn.title = "Wayfarer Tools settings";
-    btn.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"3\"></circle><path d=\"M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z\"></path></svg>";
-    btn.addEventListener("click", async () => {
-        const { container, dismiss } = await new AddonToolbox({}).createModal("uwt-settings-modal");
-        if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
-            container.classList.add("uwt-dark");
+    const { container, dismiss } = await new AddonToolbox({}).createModal("uwt-settings-modal");
+    if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+        container.classList.add("uwt-dark");
+    }
+    container.style.width = "min(900px, calc(100vw - 50px))";
+    container.style.height = "min(720px, calc(100vh - 50px))";
+    container.style.maxHeight = "none";
+    const close = makeChildNode(container, "button", "\u00d7");
+    close.className = "uwt-settings-close";
+    close.addEventListener("click", dismiss);
+    makeChildNode(container, "h2", "Wayfarer Tools settings");
+    makeChildNode(container, "p", "Changes are saved immediately. Reload the page for newly enabled or disabled addons to take effect.").style.marginBottom = "1rem";
+    const box = makeChildNode(container, "div");
+    box.id = "uwftoolsMainPluginSettingsPane";
+    for (const render of settingsSections) {
+        try {
+            render(makeChildNode(box, "div"));
         }
-        container.style.width = "min(900px, calc(100vw - 50px))";
-        container.style.height = "min(720px, calc(100vh - 50px))";
-        container.style.maxHeight = "none";
-        const close = makeChildNode(container, "button", "\u00d7");
-        close.className = "uwt-settings-close";
-        close.addEventListener("click", dismiss);
-        makeChildNode(container, "h2", "Wayfarer Tools settings");
-        makeChildNode(container, "p", "Changes are saved immediately. Reload the page for newly enabled or disabled addons to take effect.").style.marginBottom = "1rem";
-        const box = makeChildNode(container, "div");
-        box.id = "uwftoolsMainPluginSettingsPane";
-        for (const render of settingsSections) {
+        catch (e) {
+            new Logger("core:settings").error(e);
+        }
+    }
+    uwtFillSettingsPane(box, options);
+}
+// ---- redesign: diagnostic. Writes an outline of the page's current structure (data-testid values, roles,
+// control labels, custom elements) so that addons that change the review pages can be written against the
+// real markup. Text content is not included, except for the labels of buttons, headings and similar controls. ----
+const UWT_REPORT_SKIP = new Set(["SCRIPT", "STYLE", "NOSCRIPT", "LINK", "META", "TEMPLATE", "PATH", "BR", "HR"]);
+const UWT_REPORT_STRUCT = new Set([
+    "BUTTON", "A", "INPUT", "SELECT", "TEXTAREA", "LABEL", "H1", "H2", "H3", "H4", "H5", "H6", "IMG", "VIDEO", "CANVAS",
+    "IFRAME", "FORM", "DIALOG", "TABLE", "UL", "OL", "LI", "NAV", "MAIN", "HEADER", "FOOTER", "SECTION", "ARTICLE",
+    "ASIDE", "SUMMARY", "DETAILS", "FIELDSET", "LEGEND", "OPTION", "SVG",
+]);
+const UWT_REPORT_LABELLED = new Set(["BUTTON", "A", "LABEL", "H1", "H2", "H3", "H4", "H5", "H6", "LEGEND", "SUMMARY", "OPTION"]);
+const UWT_REPORT_ROLES = new Set(["button", "tab", "radio", "checkbox", "menuitem", "option", "switch", "link"]);
+function uwtIsOwnUi(el) {
+    var _a;
+    return /(^|\s)(uwt|uwf)/.test(el.id) || /(^|\s)(uwt|uwf)/.test((_a = el.getAttribute("class")) !== null && _a !== void 0 ? _a : "");
+}
+function uwtPageReport() {
+    const MAX_LINES = 900;
+    const lines = [];
+    const testIds = new Map();
+    const customTags = new Map();
+    const clip = (t, n) => (t.length > n ? `${t.slice(0, n)}...` : t);
+    const labelText = (el) => { var _a; return ((_a = el.textContent) !== null && _a !== void 0 ? _a : "").trim().replace(/\s+/g, " "); };
+    const describe = (el) => {
+        var _a, _b;
+        const tag = el.tagName.toLowerCase();
+        const parts = [tag];
+        const attr = (name, label = name) => {
+            const v = el.getAttribute(name);
+            if (v)
+                parts.push(`${label}="${clip(v, 60)}"`);
+        };
+        attr("id");
+        attr("data-testid");
+        attr("role");
+        attr("aria-label");
+        attr("type");
+        attr("name");
+        attr("placeholder");
+        attr("aria-checked");
+        attr("aria-expanded");
+        attr("aria-selected");
+        if (el.disabled)
+            parts.push("disabled");
+        const cls = el.getAttribute("class");
+        if (cls && el.tagName !== "svg")
+            parts.push(`class="${clip(cls.trim().replace(/\s+/g, " "), 100)}"`);
+        if (el instanceof HTMLImageElement && el.src) {
             try {
-                render(makeChildNode(box, "div"));
+                parts.push(`src-host=${new URL(el.src, location.href).hostname}`);
             }
-            catch (e) {
-                new Logger("core:settings").error(e);
-            }
+            catch ( /* ignore */_c) { /* ignore */ }
         }
-        uwtFillSettingsPane(box, options);
+        const role = (_a = el.getAttribute("role")) !== null && _a !== void 0 ? _a : "";
+        if (UWT_REPORT_LABELLED.has(el.tagName) || UWT_REPORT_ROLES.has(role)) {
+            const t = labelText(el);
+            if (t)
+                parts.push(`text="${clip(t, 50)}"`);
+        }
+        else {
+            let own = 0;
+            for (const n of Array.from(el.childNodes))
+                if (n.nodeType === Node.TEXT_NODE)
+                    own += ((_b = n.textContent) !== null && _b !== void 0 ? _b : "").trim().length;
+            if (own > 0)
+                parts.push(`own-text(${own} chars)`);
+        }
+        return parts.join(" ");
+    };
+    const hasOwnText = (el) => Array.from(el.childNodes).some(n => { var _a; return n.nodeType === Node.TEXT_NODE && ((_a = n.textContent) !== null && _a !== void 0 ? _a : "").trim().length > 0; });
+    const interesting = (el) => el.hasAttribute("data-testid") || !!el.id || el.hasAttribute("role") || el.hasAttribute("aria-label") ||
+        UWT_REPORT_STRUCT.has(el.tagName.toUpperCase()) || el.tagName.includes("-") || hasOwnText(el);
+    const signature = (el) => { var _a, _b, _c; return `${el.tagName}|${(_a = el.getAttribute("data-testid")) !== null && _a !== void 0 ? _a : ""}|${(_b = el.getAttribute("role")) !== null && _b !== void 0 ? _b : ""}|${((_c = el.getAttribute("class")) !== null && _c !== void 0 ? _c : "").slice(0, 40)}`; };
+    const walk = (el, depth) => {
+        var _a, _b;
+        if (lines.length >= MAX_LINES || depth > 16)
+            return;
+        const upper = el.tagName.toUpperCase();
+        if (UWT_REPORT_SKIP.has(upper) || uwtIsOwnUi(el))
+            return;
+        const show = interesting(el);
+        if (show) {
+            lines.push(`${"  ".repeat(depth)}${describe(el)}`);
+            const tid = el.getAttribute("data-testid");
+            if (tid)
+                testIds.set(tid, ((_a = testIds.get(tid)) !== null && _a !== void 0 ? _a : 0) + 1);
+            if (el.tagName.includes("-"))
+                customTags.set(el.tagName.toLowerCase(), ((_b = customTags.get(el.tagName.toLowerCase())) !== null && _b !== void 0 ? _b : 0) + 1);
+            if (upper === "SVG")
+                return;
+        }
+        // labelled controls are described by their text already; only look inside them for further controls
+        let previous = "";
+        let repeats = 0;
+        const children = Array.from(el.children);
+        for (let i = 0; i < children.length; i++) {
+            const child = children[i];
+            const sig = signature(child);
+            if (sig === previous) {
+                repeats++;
+                if (repeats >= 2 && interesting(child)) {
+                    // collapse long runs of identical siblings (list rows and the like)
+                    let j = i;
+                    while (j + 1 < children.length && signature(children[j + 1]) === sig)
+                        j++;
+                    if (j > i || repeats >= 2) {
+                        lines.push(`${"  ".repeat(depth + (show ? 1 : 0))}... (+${j - i + 1} similar ${child.tagName.toLowerCase()})`);
+                        i = j;
+                        continue;
+                    }
+                }
+            }
+            else {
+                previous = sig;
+                repeats = 0;
+            }
+            walk(child, depth + (show ? 1 : 0));
+        }
+    };
+    walk(document.body, 0);
+    const header = [
+        "Wayfarer Tools page structure report",
+        `page: ${location.pathname}`,
+        `title: ${document.title}`,
+        `viewport: ${window.innerWidth}x${window.innerHeight} | dark mode: ${document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")}`,
+        `data-testid values: ${Array.from(testIds.entries()).map(([k, v]) => (v > 1 ? `${k} (x${v})` : k)).join(", ") || "none"}`,
+        `custom elements: ${Array.from(customTags.entries()).map(([k, v]) => `${k} (x${v})`).join(", ") || "none"}`,
+        `open dialogs: ${document.querySelectorAll("dialog[open], [role=dialog], [aria-modal=true]").length}`,
+        lines.length >= MAX_LINES ? `(outline cut off after ${MAX_LINES} lines)` : "",
+        "----",
+    ].filter(Boolean);
+    return `${header.join("\n")}\n${lines.join("\n")}\n`;
+}
+async function uwtShowPageReport() {
+    const report = uwtPageReport();
+    const { container, dismiss } = await new AddonToolbox({}).createModal("uwt-report-modal");
+    const close = makeChildNode(container, "button", "\u00d7");
+    close.className = "uwt-report-close";
+    close.addEventListener("click", dismiss);
+    makeChildNode(container, "h2", "Page structure report");
+    makeChildNode(container, "p", "An outline of the structure of the page you are on. It contains element names, test ids and the labels of buttons and headings, but no other page text and no input values. Copy it and share it so that addons can be adapted to this page.");
+    const area = makeChildNode(container, "textarea");
+    area.className = "uwt-report-text";
+    area.readOnly = true;
+    area.value = report;
+    const copy = makeChildNode(container, "button", "Copy to clipboard");
+    copy.className = "uwftcore-ui-button";
+    copy.addEventListener("click", async () => {
+        try {
+            await navigator.clipboard.writeText(report);
+            copy.textContent = "Copied!";
+        }
+        catch (_a) {
+            area.select();
+            copy.textContent = "Select the text and copy it";
+        }
     });
-    document.body.appendChild(btn);
+}
+function uwtAddLauncher(options) {
+    if (document.getElementById("uwt-menu-button"))
+        return;
+    menuItems["core-page-report"] = {
+        label: "Page structure report",
+        icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z\"/><polyline points=\"14 2 14 8 20 8\"/><line x1=\"16\" y1=\"13\" x2=\"8\" y2=\"13\"/><line x1=\"16\" y1=\"17\" x2=\"8\" y2=\"17\"/></svg>",
+        callback: () => { void uwtShowPageReport(); },
+    };
+    const btn = document.createElement("button");
+    btn.id = "uwt-menu-button";
+    btn.type = "button";
+    btn.title = "Wayfarer Tools";
+    btn.innerHTML = UWT_TOOLS_ICON;
+    const menu = document.createElement("div");
+    menu.id = "uwt-menu";
+    menu.hidden = true;
+    const closeMenu = () => {
+        menu.hidden = true;
+        btn.classList.remove("uwt-open");
+    };
+    // rebuilt each time it opens, so entries added by addons after startup are included
+    const openMenu = () => {
+        menu.innerHTML = "";
+        const items = Object.values(menuItems).sort((a, b) => a.label.localeCompare(b.label));
+        for (const item of items) {
+            uwtMakeMenuItem(menu, item).addEventListener("click", () => {
+                closeMenu();
+                item.callback();
+            });
+        }
+        if (items.length > 0)
+            makeChildNode(menu, "div").className = "uwt-menu-sep";
+        uwtMakeMenuItem(menu, { label: "Settings", icon: UWT_SETTINGS_ICON}).addEventListener("click", () => {
+            closeMenu();
+            void uwtOpenSettingsWindow(options);
+        });
+        menu.hidden = false;
+        btn.classList.add("uwt-open");
+    };
+    btn.addEventListener("click", () => {
+        if (menu.hidden)
+            openMenu();
+        else
+            closeMenu();
+    });
+    document.addEventListener("click", (e) => {
+        if (!menu.hidden && !menu.contains(e.target) && !btn.contains(e.target))
+            closeMenu();
+    });
+    document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape")
+            closeMenu();
+    });
+    document.body.append(menu, btn);
 }
 function uwtFillSettingsPane(box, options) {
     for (const entry of options) {
@@ -4003,18 +4206,12 @@ var nominationStats = () => {
                 body.innerHTML = buildStatsHtml(nominations);
                 addExportButtons(makeChildNode(container, "div"), nominations);
             };
-            const addButton = async () => {
-                const body = await untilTruthy(() => document.body);
-                if (document.getElementById("uwtns-button"))
-                    return;
-                const button = makeChildNode(body, "button");
-                button.id = "uwtns-button";
-                button.type = "button";
-                button.title = "Nomination stats";
-                button.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"11\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"14\"/></svg>";
-                button.addEventListener("click", () => { void openStatsWindow(); });
-            };
-            void addButton();
+            // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+            toolbox.addMenuItem("nomination-stats", {
+                label: "Nomination stats",
+                icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"6\" y1=\"20\" x2=\"6\" y2=\"11\"/><line x1=\"12\" y1=\"20\" x2=\"12\" y2=\"4\"/><line x1=\"18\" y1=\"20\" x2=\"18\" y2=\"14\"/></svg>",
+                callback: () => { void openStatsWindow(); },
+            });
             toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", (data) => {
                 if (data && data.submissions)
                     nominations = data.submissions;
@@ -4266,7 +4463,6 @@ var nominationMap = () => {
                 if (!data || !data.submissions)
                     return;
                 nominations = data.submissions;
-                updateButtonLabel();
                 if (redraw)
                     void redraw(true);
             };
@@ -4281,11 +4477,6 @@ var nominationMap = () => {
             };
             const getIconUrl = (nomination) => `https://maps.google.com/mapfiles/ms/icons/${STATUS_COLORS[nomination.status] || "blue"}.png`;
             const prettyStatus = (st) => String(st || "UNKNOWN").toLowerCase().replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
-            let button = null;
-            const updateButtonLabel = () => {
-                if (button)
-                    button.title = nominations ? `Nomination map (${nominations.length} nominations)` : "Nomination map";
-            };
             const ensureStyle = () => {
                 if (document.getElementById("uwtnm-style2"))
                     return;
@@ -4293,10 +4484,6 @@ var nominationMap = () => {
                 st.id = "uwtnm-style2";
                 st.textContent = `
 
-        #uwtnm-button{position:fixed;left:16px;bottom:64px;z-index:99990;width:40px;height:40px;border-radius:50%;
-        border:1px solid rgba(128,128,128,.5);background:#111827;color:#f9fafb;cursor:pointer;display:flex;
-        align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;opacity:.75}
-        #uwtnm-button:hover{opacity:1}
         .uwtnm-modal{background:#fff !important;color:#111827 !important;max-width:none !important;max-height:none !important;
         width:calc(100vw - 50px);height:calc(100vh - 50px);overflow:hidden !important;display:flex;flex-direction:column;box-sizing:border-box}
         .uwtnm-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}
@@ -4363,7 +4550,6 @@ var nominationMap = () => {
                             return false;
                         }
                     }
-                    updateButtonLabel();
                     return true;
                 };
                 const buildChips = () => {
@@ -4477,20 +4663,12 @@ var nominationMap = () => {
                     return;
                 await build();
             };
-            const addButton = async () => {
-                await untilTruthy(() => document.body);
-                if (document.getElementById("uwtnm-button"))
-                    return;
-                ensureStyle();
-                button = document.createElement("button");
-                button.id = "uwtnm-button";
-                button.type = "button";
-                button.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"></path><circle cx=\"12\" cy=\"10\" r=\"2.5\"></circle></svg>";
-                button.addEventListener("click", () => { void openMapWindow(); });
-                document.body.appendChild(button);
-                updateButtonLabel();
-            };
-            void addButton();
+            // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+            toolbox.addMenuItem("nomination-map", {
+                label: "Nomination map",
+                icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" aria-hidden=\"true\"><path d=\"M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z\"></path><circle cx=\"12\" cy=\"10\" r=\"2.5\"></circle></svg>",
+                callback: () => { void openMapWindow(); },
+            });
             toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", parseContributions);
         },
     });
@@ -4689,17 +4867,6 @@ var reviewHistory = () => {
                 makeChildNode(container, "h2", "Review history");
                 addRHButtons(makeChildNode(container, "div"));
                 await renderReviewHistory(container);
-            };
-            const addHistoryButton = async () => {
-                const body = await untilTruthy(() => document.body);
-                if (document.getElementById("uwtrh-button"))
-                    return;
-                const button = makeChildNode(body, "button");
-                button.id = "uwtrh-button";
-                button.type = "button";
-                button.title = "Review history";
-                button.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><polyline points=\"12 7 12 12 15 14\"/></svg>";
-                button.addEventListener("click", () => { void openHistoryWindow(); });
             };
             const addRHButtons = (outer) => {
                 outer.classList.add("uwtrh-idb");
@@ -5040,7 +5207,12 @@ var reviewHistory = () => {
             };
             toolbox.interceptOpenJson("GET", "/api/v1/vault/review", handleIncomingReview);
             toolbox.interceptSendJson("/api/v1/vault/review", handleSubmittedReview);
-            void addHistoryButton();
+            // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+            toolbox.addMenuItem("review-history", {
+                label: "Review history",
+                icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><polyline points=\"12 7 12 12 15 14\"/></svg>",
+                callback: () => { void openHistoryWindow(); },
+            });
             return {
                 async getAllReviews() {
                     let result = [];
@@ -7268,36 +7440,68 @@ var extendedStats = () => {
                     },
                 }),
             });
-            const parseStats = async (profile) => {
-                const parentRef = await untilTruthy(() => document.querySelector(".wf-profile-stats__section-title"));
-                const allAgreements = getTotalAgreementCount(profile) || profile.accepted + profile.rejected + profile.duplicated;
-                const percent = ((allAgreements / profile.finished) * 100).toFixed(1);
-                const otherAgreements = allAgreements - profile.accepted - profile.rejected - profile.duplicated;
-                const totalParent = document.createElement("div");
-                totalParent.classList.add("uwftes-parent");
-                makeChildNode(totalParent, "div", "Processed & Agreement").classList.add("uwftes-text");
-                makeChildNode(totalParent, "div", `${allAgreements} (${percent}%)`).classList.add("uwftes-count");
-                insertAfter(parentRef, totalParent);
-                const otherParent = document.createElement("div");
-                otherParent.classList.add("uwftes-parent");
-                makeChildNode(otherParent, "div", "Other Agreements").classList.add("uwftes-text");
-                makeChildNode(otherParent, "div", otherAgreements.toString()).classList.add("uwftes-count");
-                insertAfter(parentRef.parentElement.lastChild, otherParent);
-                const exportParent = document.createElement("div");
-                exportParent.classList.add("uwftes-parent");
-                makeChildNode(exportParent, "br");
-                const exportButton = makeChildNode(exportParent, "button", "Copy Stats");
-                exportButton.classList.add("uwftcore-ui-button");
-                exportButton.addEventListener("click", async () => {
-                    const exportData = makeStats(profile);
-                    await navigator.clipboard.writeText(JSON.stringify(exportData));
-                    alert("Stats copied to clipboard!");
-                });
-                const credCard = await untilTruthy(() => document.querySelector("wf-credibility-card"));
-                credCard.parentNode.appendChild(exportParent);
+            // ---- redesign: the Profile page (wf-profile-stats__section-title, wf-credibility-card) the extra stats and
+            // the Copy Stats button used to be added to is gone. They are now shown in a window opened from the
+            // Wayfarer Tools menu. Auto-submitting to WDD no longer waits for the page, only for the profile data.
+            let profile = null;
+            const handleProfile = (p) => {
+                profile = p;
                 const wddLink = config.get("wddClippyLink");
                 if (wddLink)
-                    sendToKingClippy(profile, wddLink);
+                    sendToKingClippy(p, wddLink);
+            };
+            const openStatsWindow = async () => {
+                const { container, dismiss } = await toolbox.createModal("uwtes-modal");
+                if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+                    container.classList.add("uwt-dark");
+                }
+                const close = makeChildNode(container, "button", "\u00d7");
+                close.className = "uwtes-x";
+                close.addEventListener("click", dismiss);
+                makeChildNode(container, "h2", "Extended stats");
+                const body = makeChildNode(container, "div");
+                if (profile === null) {
+                    makeChildNode(body, "p", "Loading profile...");
+                    try {
+                        profile = await toolbox.makeRequest("GET", "/api/v1/vault/profile");
+                    }
+                    catch (e) {
+                        logger.error(e);
+                    }
+                    body.innerHTML = "";
+                }
+                const p = profile;
+                if (p === null) {
+                    makeChildNode(body, "p", "Could not load your profile.");
+                    return;
+                }
+                const allAgreements = getTotalAgreementCount(p) || p.accepted + p.rejected + p.duplicated;
+                const percent = p.finished > 0 ? ((allAgreements / p.finished) * 100).toFixed(1) : "-";
+                const otherAgreements = allAgreements - p.accepted - p.rejected - p.duplicated;
+                const table = makeChildNode(body, "table");
+                table.className = "uwtes-table";
+                const rows = [
+                    ["Processed", p.finished.toString(), false],
+                    ["Accepted", p.accepted.toString(), false],
+                    ["Rejected", p.rejected.toString(), false],
+                    ["Duplicates", p.duplicated.toString(), false],
+                    ["Processed & Agreement", `${allAgreements} (${percent}%)`, true],
+                    ["Other Agreements", otherAgreements.toString(), true],
+                ];
+                for (const [label, value, extended] of rows) {
+                    const row = makeChildNode(table, "tr");
+                    makeChildNode(row, "td", label).classList.add("uwftes-text");
+                    makeChildNode(row, "td", value).classList.add("uwftes-count");
+                    if (extended)
+                        row.classList.add("uwtes-extended");
+                }
+                const exportButton = makeChildNode(body, "button", "Copy Stats");
+                exportButton.classList.add("uwftcore-ui-button", "uwtes-copy");
+                exportButton.addEventListener("click", async () => {
+                    await navigator.clipboard.writeText(JSON.stringify(makeStats(p)));
+                    exportButton.textContent = "Stats copied to clipboard!";
+                    setTimeout(() => { exportButton.textContent = "Copy Stats"; }, 2000);
+                });
             };
             const getTotalAgreementCount = (stats) => {
                 switch (config.get("agreementCountType")) {
@@ -7362,7 +7566,13 @@ var extendedStats = () => {
                     data: makeStats(stats),
                 }));
             };
-            toolbox.interceptOpenJson("GET", "/api/v1/vault/profile", parseStats);
+            // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+            toolbox.addMenuItem("extended-stats", {
+                label: "Extended stats",
+                icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><polyline points=\"22 12 18 12 15 21 9 3 6 12 2 12\"/></svg>",
+                callback: () => { void openStatsWindow(); },
+            });
+            toolbox.interceptOpenJson("GET", "/api/v1/vault/profile", handleProfile);
         },
     });
 };var ImportIcon = "data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%20standalone%3D%22no%22%3F%3E%3Csvg%20%20%20width%3D%22571.414%22%20%20%20height%3D%22437.86945%22%20%20%20version%3D%221.1%22%20%20%20viewBox%3D%220%200%20151.18471%20115.8515%22%20%20%20id%3D%22svg3%22%20%20%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20%20%20xmlns%3Asvg%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%20%20%3Cdefs%20%20%20%20%20id%3D%22defs3%22%20%2F%3E%20%20%3Cpath%20%20%20%20%20d%3D%22m%202.8482365%2C52.50375%2018.2619995%2C18.82%2018.262%2C-18.82%22%20%20%20%20%20fill%3D%22none%22%20%20%20%20%20stroke%3D%22%234d4d4d%22%20%20%20%20%20stroke-linecap%3D%22butt%22%20%20%20%20%20stroke-linejoin%3D%22miter%22%20%20%20%20%20stroke-miterlimit%3D%224%22%20%20%20%20%20stroke-width%3D%227.9375%22%20%20%20%20%20id%3D%22path1%22%20%20%20%20%20style%3D%22stroke%3A%23808080%3Bstroke-opacity%3A1%22%20%2F%3E%20%20%3Cg%20%20%20%20%20transform%3D%22translate%28-65.773364%2C-74.36625%29%22%20%20%20%20%20fill%3D%22none%22%20%20%20%20%20stroke-width%3D%227.9375%22%20%20%20%20%20id%3D%22g3%22%3E%20%20%20%20%3Cpath%20%20%20%20%20%20%20d%3D%22m%20140.38%2C95.555%20v%2036.737%20l%2018.518%2C18.152%22%20%20%20%20%20%20%20stroke%3D%22%230573e1%22%20%20%20%20%20%20%20stroke-linecap%3D%22butt%22%20%20%20%20%20%20%20stroke-linejoin%3D%22miter%22%20%20%20%20%20%20%20stroke-miterlimit%3D%224%22%20%20%20%20%20%20%20id%3D%22path2%22%20%20%20%20%20%20%20style%3D%22stroke%3A%23df471c%3Bstroke-opacity%3A1%22%20%2F%3E%20%20%20%20%3Cpath%20%20%20%20%20%20%20d%3D%22m%2087.842%2C145.09%20a%2054.085%2C53.957%200%200%201%20-1.5433%2C-12.798%2054.085%2C53.957%200%200%201%2054.085%2C-53.957%2054.085%2C53.957%200%200%201%2054.085%2C53.957%2054.085%2C53.957%200%200%201%20-54.085%2C53.957%2054.085%2C53.957%200%200%201%20-38.244%2C-15.804%22%20%20%20%20%20%20%20stroke%3D%22%234d4d4d%22%20%20%20%20%20%20%20style%3D%22stroke%3A%23808080%3Bstroke-opacity%3A1%3Bpaint-order%3Astroke%20markers%20fill%22%20%20%20%20%20%20%20id%3D%22path3%22%20%2F%3E%20%20%3C%2Fg%3E%3C%2Fsvg%3E";var LoadingWheel = "data:image/svg+xml,%3Csvg%20width%3D%2238%22%20height%3D%2238%22%20viewBox%3D%220%200%2038%2038%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%20%20%20%20%3Cdefs%3E%20%20%20%20%20%20%20%20%3ClinearGradient%20x1%3D%228.042%25%22%20y1%3D%220%25%22%20x2%3D%2265.682%25%22%20y2%3D%2223.865%25%22%20id%3D%22a%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20stop-color%3D%22%23fff%22%20stop-opacity%3D%220%22%20offset%3D%220%25%22%2F%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20stop-color%3D%22%23fff%22%20stop-opacity%3D%22.631%22%20offset%3D%2263.146%25%22%2F%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cstop%20stop-color%3D%22%23fff%22%20offset%3D%22100%25%22%2F%3E%20%20%20%20%20%20%20%20%3C%2FlinearGradient%3E%20%20%20%20%3C%2Fdefs%3E%20%20%20%20%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%20%20%20%20%20%20%20%20%3Cg%20transform%3D%22translate%281%201%29%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Cpath%20d%3D%22M36%2018c0-9.94-8.06-18-18-18%22%20id%3D%22Oval-2%22%20stroke%3D%22url%28%23a%29%22%20stroke-width%3D%222%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3CanimateTransform%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20attributeName%3D%22transform%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3D%22rotate%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20from%3D%220%2018%2018%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20to%3D%22360%2018%2018%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20dur%3D%220.9s%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20repeatCount%3D%22indefinite%22%20%2F%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fpath%3E%20%20%20%20%20%20%20%20%20%20%20%20%3Ccircle%20fill%3D%22%23fff%22%20cx%3D%2236%22%20cy%3D%2218%22%20r%3D%221%22%3E%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%3CanimateTransform%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20attributeName%3D%22transform%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20type%3D%22rotate%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20from%3D%220%2018%2018%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20to%3D%22360%2018%2018%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20dur%3D%220.9s%22%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20%20repeatCount%3D%22indefinite%22%20%2F%3E%20%20%20%20%20%20%20%20%20%20%20%20%3C%2Fcircle%3E%20%20%20%20%20%20%20%20%3C%2Fg%3E%20%20%20%20%3C%2Fg%3E%3C%2Fsvg%3E";var IconNomination = "data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%20standalone%3D%22no%22%3F%3E%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20version%3D%221.1%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%20512%20512%22%20xml%3Aspace%3D%22preserve%22%3E%20%20%3Cg%20transform%3D%22matrix%285.5202%200%200%205.5202%207.5948%207.5921%29%22%3E%20%20%20%20%3Cpath%20%20%20%20%20%20d%3D%22m45%200c-19.537%200-35.375%2015.838-35.375%2035.375%200%208.722%203.171%2016.693%208.404%2022.861l26.971%2031.764%2026.97-31.765c5.233-6.167%208.404-14.139%208.404-22.861%201e-3%20-19.536-15.837-35.374-35.374-35.374zm0%2048.705c-8.035%200-14.548-6.513-14.548-14.548s6.513-14.548%2014.548-14.548%2014.548%206.513%2014.548%2014.548-6.513%2014.548-14.548%2014.548z%22%20%20%20%20%20%20fill%3D%22%23ffffff%22%20%20%20%20%20%20stroke-linecap%3D%22round%22%20%2F%3E%20%20%3C%2Fg%3E%3C%2Fsvg%3E";var IconPhoto = "data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%20standalone%3D%22no%22%3F%3E%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20version%3D%221.1%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%20512%20512%22%20xml%3Aspace%3D%22preserve%22%3E%20%20%3Cpath%20%20%20%20d%3D%22m190.39%2084.949c-6.6975%205.26e-4%20-12.661%204.2407-14.861%2010.566l-16.951%2048.736h-86.783c-16.463%208e-5%20-29.807%2013.346-29.807%2029.809v221.27c-1.31e-4%2017.518%2014.201%2031.719%2031.719%2031.719h360.38c19.84%201.8e-4%2035.922-16.084%2035.922-35.924v-215.54c5.2e-4%20-17.307-14.029-31.337-31.336-31.338h-86.865l-16.549-48.605c-2.1787-6.3967-8.1858-10.698-14.943-10.697h-129.92zm224.45%20102.69c12.237%205.2e-4%2022.156%209.8009%2022.156%2021.889%203.9e-4%2012.088-9.9185%2021.888-22.156%2021.889-12.238%205.4e-4%20-22.161-9.7994-22.16-21.889%207e-4%20-12.088%209.9224-21.889%2022.16-21.889zm-158.85%2030.947c37.042-8.9e-4%2067.071%2030.028%2067.07%2067.07-1.9e-4%2037.042-30.029%2067.069-67.07%2067.068-37.041-1.8e-4%20-67.07-30.028-67.07-67.068-8.9e-4%20-37.041%2030.029-67.07%2067.07-67.07z%22%20%20%20%20fill%3D%22%23ffffff%22%20%2F%3E%3C%2Fsvg%3E";var IconEditLocation = "data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%20standalone%3D%22no%22%3F%3E%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20version%3D%221.1%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%20512%20512%22%20xml%3Aspace%3D%22preserve%22%3E%20%20%3Cpath%20%20%20%20d%3D%22m275.28%20191.57-37.927%20265.39-182.75-401.92zm182.12%2046.046-274.31%2038.177-128.26-220.75z%22%20%20%20%20stroke-linecap%3D%22round%22%20%20%20%20stroke-linejoin%3D%22round%22%20%20%20%20fill%3D%22%23ffffff%22%20%20%20%20stroke%3D%22%23ffffff%22%20%20%20%20stroke-width%3D%2226.07%22%20%2F%3E%3C%2Fsvg%3E";var IconEditTitle = "data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%20standalone%3D%22no%22%3F%3E%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20version%3D%221.1%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%20512%20512%22%20xml%3Aspace%3D%22preserve%22%3E%20%20%3Cpath%20d%3D%22m15.116%20412.39v84.373h84.373%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%2230%22%20%2F%3E%20%20%3Cpath%20d%3D%22m496.66%20412.24v84.373h-84.373%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%2230%22%20%2F%3E%20%20%3Cpath%20d%3D%22m14.915%20100.07v-84.373h84.373%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%2230%22%20%2F%3E%20%20%3Cpath%20d%3D%22m496.46%20100.22v-84.373h-84.373%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%2230%22%20%2F%3E%20%20%3Cpath%20%20%20%20d%3D%22m81.232%2082.633v142.8l29.4%201.4004c1.2444-20.844%203.4221-38.112%206.5332-51.801%203.4222-14%207.7775-25.044%2013.066-33.133%205.6-8.4%2012.291-14.156%2020.068-17.268%207.7778-3.4222%2016.955-5.1328%2027.533-5.1328h42.467v261.33c0%2014.311-13.844%2021.467-41.533%2021.467v27.066h155.4v-27.066c-28%200-42-7.1557-42-21.467v-261.33h42c10.578%200%2019.755%201.7106%2027.533%205.1328%207.7778%203.1111%2014.313%208.8676%2019.602%2017.268%205.6%208.0889%209.9553%2019.133%2013.066%2033.133%203.4222%2013.689%205.7556%2030.956%207%2051.801l29.4-1.4004v-142.8h-349.54z%22%20%20%20%20fill%3D%22%23ffffff%22%20%2F%3E%3C%2Fsvg%3E";var IconEditDescription = "data:image/svg+xml,%3C%3Fxml%20version%3D%221.0%22%20encoding%3D%22UTF-8%22%20standalone%3D%22no%22%3F%3E%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20version%3D%221.1%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%20512%20512%22%20xml%3Aspace%3D%22preserve%22%3E%20%20%3Cpath%20d%3D%22m15.116%20412.39v84.373h84.373%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%2230%22%20%2F%3E%20%20%3Cpath%20d%3D%22m496.66%20412.24v84.373h-84.373%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%2230%22%20%2F%3E%20%20%3Cpath%20d%3D%22m14.915%20100.07v-84.373h84.373%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%2230%22%20%2F%3E%20%20%3Cpath%20d%3D%22m496.46%20100.22v-84.373h-84.373%22%20fill%3D%22none%22%20stroke%3D%22%23ffffff%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20stroke-width%3D%2230%22%20%2F%3E%20%20%3Cpath%20%20%20%20d%3D%22m79.133%2082.633v27.533c27.689%200%2041.533%207.1557%2041.533%2021.467v249.2c0%2014.311-13.844%2021.467-41.533%2021.467v27.066h182c28.311%200%2053.201-2.9561%2074.668-8.8672s39.355-15.867%2053.666-29.867c14.622-14%2025.51-32.667%2032.666-56%207.1556-23.333%2010.734-52.577%2010.734-87.732%200-34.533-3.5788-62.533-10.734-84-7.1556-21.467-18.044-38.111-32.666-49.934-14.311-11.822-32.199-19.756-53.666-23.801-21.467-4.3556-46.357-6.5332-74.668-6.5332h-182zm112.93%2036.867h76.533c17.422%200%2031.889%202.489%2043.4%207.4668%2011.822%204.6667%2021.156%2012.134%2028%2022.4%207.1556%2010.267%2012.134%2023.644%2014.934%2040.133%202.8%2016.178%204.1992%2035.779%204.1992%2058.801%200%2023.022-1.3992%2043.555-4.1992%2061.6s-7.778%2033.288-14.934%2045.732c-6.8444%2012.133-16.178%2021.467-28%2028-11.511%206.2222-25.978%209.334-43.4%209.334h-76.533v-273.47z%22%20%20%20%20fill%3D%22%23ffffff%22%20%2F%3E%3C%2Fsvg%3E";// Copyright 2025 tehstone, bilde2910
@@ -7379,12 +7589,6 @@ const SUPPORTED_EMAIL_TYPES = [
     /*EmailType.EDIT_RECEIVED,
     EmailType.EDIT_DECIDED,*/
 ];
-// If this changes, also update the CSS declaration
-const CONTRIB_DATE_SELECTOR = "app-submissions app-details-pane app-submission-tag-set + span";
-// Right triangle needs a VS15 variant selector (U+FE0E) to avoid being rendered as an emoji
-// https://en.wikipedia.org/wiki/Geometric_Shapes_(Unicode_block)#Emoji
-const RIGHT_TRIANGLE = "\uFE0E\u25B6";
-const DOWN_TRIANGLE = "\u25BC";
 const STATE_MAP = {
     ACCEPTED: "Accepted",
     REJECTED: "Rejected",
@@ -7434,11 +7638,6 @@ var nominationStatusHistory = () => {
             config.setUserEditable("notifyNewContributions", {
                 label: "Notify about new contributions",
                 help: "Create popup notifications whenever new contributions are detected in the contributions list",
-                editor: new CheckboxEditor(),
-            });
-            config.setUserEditable("expandedByDefault", {
-                label: "Expand the status history list by default",
-                help: "Always show the full history by default when viewing a contribution",
                 editor: new CheckboxEditor(),
             });
             let ready = false;
@@ -7679,76 +7878,10 @@ var nominationStatusHistory = () => {
                 });
             };
             const handleNominations = async (result) => {
+                latestSubmissions = result.submissions;
+                changeCheckStarted = true;
                 await checkNominationChanges(result.submissions);
                 void importEmails(result.submissions);
-                // Add event listener for each element in the nomination list,
-                // so we can display the history box for nominations on click.
-                const ref = await untilTruthy(() => document.querySelector("app-submissions-list"));
-                ref.addEventListener("click", async (e) => {
-                    // Ensure there is only one selection box.
-                    const elements = document.querySelectorAll(".uwtnsh-dropdown");
-                    for (const e of elements)
-                        e.remove();
-                    const item = e.target.closest("app-submissions-list-item");
-                    if (item !== null) {
-                        // Hopefully this index is constant and never changes?
-                        // I don't see a better way to access it.
-                        const nomId = item.__ngContext__[22].id;
-                        if (nomId) {
-                            const env_3 = { stack: [], error: void 0, hasError: false };
-                            try {
-                                const dsRef = await untilTruthy(() => document.querySelector(CONTRIB_DATE_SELECTOR));
-                                const box = makeChildNode(dsRef.parentNode, "div");
-                                box.classList.add("uwtnsh-dropdown");
-                                const leftBox = makeChildNode(box, "a", RIGHT_TRIANGLE);
-                                leftBox.classList.add("uwtnsh-dd-left");
-                                const rightBox = makeChildNode(box, "div");
-                                rightBox.classList.add("uwtnsh-dd-right");
-                                const collapsedLine = makeChildNode(rightBox, "p");
-                                collapsedLine.classList.add("uwtnsh-collapsed");
-                                const expandedBox = makeChildNode(rightBox, "div");
-                                expandedBox.classList.add("uwtnsh-expanded");
-                                const toggleCollapsed = (ev) => {
-                                    ev === null || ev === void 0 ? void 0 : ev.preventDefault();
-                                    collapsed = !collapsed;
-                                    collapsedLine.style.display = collapsed ? "block" : "none";
-                                    expandedBox.style.display = collapsed ? "none" : "block";
-                                    leftBox.textContent = collapsed ? RIGHT_TRIANGLE : DOWN_TRIANGLE;
-                                    return false;
-                                };
-                                let collapsed = config.get("expandedByDefault");
-                                toggleCollapsed();
-                                box.addEventListener("click", toggleCollapsed);
-                                // Don't populate the dropdown until the nomination change detection has run successfully.
-                                // That process sets ready = true when done. If it was already ready, then this will
-                                // continue immediately. When ready, that means the previous connection was closed, so we
-                                // open a new connection here to fetch data for the selected nomination.
-                                await untilTruthy(() => ready);
-                                const idb = __addDisposableResource(env_3, await toolbox.openIDB("history", "readonly"), false);
-                                const savedNom = await idb.get(nomId);
-                                // Create an option for initial nomination; this may not be stored in the IDB history,
-                                // so we need to handle this as a special case here.
-                                if (savedNom.statusHistory.length == 0 || savedNom.statusHistory[0].status !== ContributionStatus.NOMINATED) {
-                                    collapsedLine.textContent = `${savedNom.day} - Nominated`;
-                                    makeChildNode(expandedBox, "p", `${savedNom.day} - Nominated`);
-                                }
-                                // Then, add options for each entry in the history.
-                                let previous = null;
-                                for (const entry of savedNom.statusHistory) {
-                                    addEventToHistoryDisplay(box, entry, previous);
-                                    previous = entry.status;
-                                }
-                            }
-                            catch (e_3) {
-                                env_3.error = e_3;
-                                env_3.hasError = true;
-                            }
-                            finally {
-                                __disposeResources(env_3);
-                            }
-                        }
-                    }
-                });
             };
             let lastLoadSubmissions = [];
             let emailListenerAttached = false;
@@ -7759,22 +7892,22 @@ var nominationStatusHistory = () => {
                 const epInstance = new EmailProcessor(submissions);
                 await epInstance.prepare();
                 {
-                    const env_4 = { stack: [], error: void 0, hasError: false };
+                    const env_3 = { stack: [], error: void 0, hasError: false };
                     try {
                         logger.info("Opening history and email object stores");
-                        const dbHistory = __addDisposableResource(env_4, await toolbox.openIDB("history", "readwrite"), false);
-                        const dbEmails = __addDisposableResource(env_4, await toolbox.openIDB("emails", "readwrite"), false);
+                        const dbHistory = __addDisposableResource(env_3, await toolbox.openIDB("history", "readwrite"), false);
+                        const dbEmails = __addDisposableResource(env_3, await toolbox.openIDB("emails", "readwrite"), false);
                         for await (const email of emailAPI.iterate()) {
                             await epInstance.import(email, dbHistory, dbEmails);
                         }
                         logger.info("Closing history and email object stores");
                     }
-                    catch (e_4) {
-                        env_4.error = e_4;
-                        env_4.hasError = true;
+                    catch (e_3) {
+                        env_3.error = e_3;
+                        env_3.hasError = true;
                     }
                     finally {
-                        __disposeResources(env_4);
+                        __disposeResources(env_3);
                     }
                 }
                 epInstance.finalize(false);
@@ -7793,30 +7926,42 @@ var nominationStatusHistory = () => {
                     await epInstance.prepare();
                     return (async function* () {
                         {
-                            const env_5 = { stack: [], error: void 0, hasError: false };
+                            const env_4 = { stack: [], error: void 0, hasError: false };
                             try {
                                 logger.info("Opening history and email object stores within generator");
-                                const dbHistory = __addDisposableResource(env_5, await toolbox.openIDB("history", "readwrite"), false);
-                                const dbEmails = __addDisposableResource(env_5, await toolbox.openIDB("emails", "readwrite"), false);
+                                const dbHistory = __addDisposableResource(env_4, await toolbox.openIDB("history", "readwrite"), false);
+                                const dbEmails = __addDisposableResource(env_4, await toolbox.openIDB("emails", "readwrite"), false);
                                 logger.info("Yielding importer function from generator");
                                 yield async (email) => {
                                     await epInstance.import(email, dbHistory, dbEmails);
                                 };
                                 logger.info("Generator import done; closing object stores");
                             }
-                            catch (e_5) {
-                                env_5.error = e_5;
-                                env_5.hasError = true;
+                            catch (e_4) {
+                                env_4.error = e_4;
+                                env_4.hasError = true;
                             }
                             finally {
-                                __disposeResources(env_5);
+                                __disposeResources(env_4);
                             }
                         }
                         epInstance.finalize(true);
                     })();
                 });
             };
-            const addEventToHistoryDisplay = (box, current, prevStatus) => {
+            // ---- redesign: the Contribution Management page (app-submissions-list, the details pane and Angular's
+            // internal data) the history dropdown was added to is gone. Tracking changes and processing emails
+            // work as before; the history is now shown in a window opened with a button at the bottom left.
+            const TYPE_LABELS = {
+                [ContributionType.NOMINATION]: "Nomination",
+                [ContributionType.PHOTO]: "Photo",
+                [ContributionType.EDIT_LOCATION]: "Location edit",
+                [ContributionType.EDIT_TITLE]: "Title edit",
+                [ContributionType.EDIT_DESCRIPTION]: "Description edit",
+            };
+            let latestSubmissions = null;
+            let changeCheckStarted = false;
+            const describeEntry = (current, prevStatus) => {
                 var _a;
                 let statusText;
                 if (current.status === "NOMINATED" && prevStatus !== null) {
@@ -7827,32 +7972,129 @@ var nominationStatusHistory = () => {
                 }
                 // Format the date as UTC as this is what Wayfarer uses to display the nomination date.
                 // Maybe make this configurable to user's local time later?
-                const prefix = `${toUtcIsoDate(new Date(current.timestamp))} - `;
-                const collapsedLine = box.querySelector(".uwtnsh-collapsed");
-                collapsedLine.textContent = prefix + statusText;
-                const line = document.createElement("p");
-                line.appendChild(document.createTextNode(prefix));
-                if (current.verified)
-                    collapsedLine.classList.add("uwtnsh-verified");
-                else if (collapsedLine.classList.contains("uwtnsh-verified"))
-                    collapsedLine.classList.remove("uwtnsh-verified");
-                if (typeof current.email !== "undefined") {
-                    const aDisplay = makeChildNode(line, "a", statusText);
-                    aDisplay.addEventListener("click", async (e) => {
-                        e.stopPropagation();
-                        const emailAPI = await toolbox.getAddonAPI("uwt-core").email();
-                        const email = await emailAPI.get(current.email);
-                        email.display();
-                    });
-                }
-                else {
-                    line.appendChild(document.createTextNode(statusText));
-                }
-                if (current.verified)
-                    line.classList.add("uwtnsh-verified");
-                const expandedBox = box.querySelector(".uwtnsh-expanded");
-                expandedBox.appendChild(line);
+                return { prefix: `${toUtcIsoDate(new Date(current.timestamp))} - `, statusText };
             };
+            const renderHistory = (target, sub, saved) => {
+                var _a, _b;
+                const history = (_a = saved === null || saved === void 0 ? void 0 : saved.statusHistory) !== null && _a !== void 0 ? _a : [];
+                // The initial nomination may not be stored in the IDB history, so it is a special case here.
+                if (history.length === 0 || history[0].status !== ContributionStatus.NOMINATED) {
+                    makeChildNode(target, "p", `${(_b = saved === null || saved === void 0 ? void 0 : saved.day) !== null && _b !== void 0 ? _b : sub.day} - Nominated`);
+                }
+                let previous = null;
+                for (const entry of history) {
+                    const { prefix, statusText } = describeEntry(entry, previous);
+                    const line = makeChildNode(target, "p");
+                    line.appendChild(document.createTextNode(prefix));
+                    if (typeof entry.email !== "undefined") {
+                        const aDisplay = makeChildNode(line, "a", statusText);
+                        aDisplay.addEventListener("click", async () => {
+                            const emailAPI = await toolbox.getAddonAPI("uwt-core").email();
+                            const email = await emailAPI.get(entry.email);
+                            email.display();
+                        });
+                    }
+                    else {
+                        line.appendChild(document.createTextNode(statusText));
+                    }
+                    if (entry.verified)
+                        line.classList.add("uwtnsh-verified");
+                    previous = entry.status;
+                }
+            };
+            const openHistoryWindow = async () => {
+                var _a, _b, _c, _d;
+                const { container, dismiss } = await toolbox.createModal("uwtnsh-modal");
+                if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+                    container.classList.add("uwt-dark");
+                }
+                const close = makeChildNode(container, "button", "\u00d7");
+                close.className = "uwtnsh-x";
+                close.addEventListener("click", dismiss);
+                makeChildNode(container, "h2", "Contribution status history");
+                const body = makeChildNode(container, "div");
+                body.className = "uwtnsh-body";
+                makeChildNode(body, "p", "Loading contributions...");
+                let subs = latestSubmissions;
+                if (subs === null) {
+                    try {
+                        const data = await toolbox.makeRequest("GET", "/api/v1/vault/manage");
+                        if (data && data.submissions)
+                            subs = data.submissions;
+                    }
+                    catch (e) {
+                        logger.error(e);
+                    }
+                }
+                if (subs === null) {
+                    body.textContent = "Could not load your contributions.";
+                    return;
+                }
+                // Don't read the history while the change detection (which writes to it) is still running.
+                if (changeCheckStarted)
+                    await untilTruthy(() => ready);
+                let stored = {};
+                {
+                    const env_5 = { stack: [], error: void 0, hasError: false };
+                    try {
+                        const idb = __addDisposableResource(env_5, await toolbox.openIDB("history", "readonly"), false);
+                        stored = indexToMap(await idb.getAll(), "id");
+                    }
+                    catch (e_5) {
+                        env_5.error = e_5;
+                        env_5.hasError = true;
+                    }
+                    finally {
+                        __disposeResources(env_5);
+                    }
+                }
+                body.innerHTML = "";
+                const list = [...subs].sort((a, b) => b.order - a.order);
+                if (list.length === 0) {
+                    makeChildNode(body, "p", "You have no contributions yet.");
+                    return;
+                }
+                const side = makeChildNode(body, "div");
+                side.className = "uwtnsh-side";
+                const search = makeChildNode(side, "input");
+                search.type = "text";
+                search.placeholder = "Search contributions";
+                const listBox = makeChildNode(side, "div");
+                listBox.className = "uwtnsh-list";
+                const detail = makeChildNode(body, "div");
+                detail.className = "uwtnsh-detail";
+                const items = [];
+                for (const sub of list) {
+                    const title = sub.title || ((_a = sub.poiData) === null || _a === void 0 ? void 0 : _a.title) || "(untitled)";
+                    const button = makeChildNode(listBox, "button");
+                    button.className = "uwtnsh-item";
+                    makeChildNode(button, "span", title);
+                    makeChildNode(button, "small", `${(_b = TYPE_LABELS[sub.type]) !== null && _b !== void 0 ? _b : sub.type} - ${sub.day} - ${(_c = STATE_MAP[sub.status]) !== null && _c !== void 0 ? _c : sub.status}`);
+                    button.addEventListener("click", () => {
+                        var _a, _b;
+                        for (const item of items)
+                            item.button.classList.toggle("uwtnsh-active", item.button === button);
+                        detail.innerHTML = "";
+                        makeChildNode(detail, "h3", title);
+                        makeChildNode(detail, "p", `${(_a = TYPE_LABELS[sub.type]) !== null && _a !== void 0 ? _a : sub.type} submitted ${sub.day}. Current status: ${(_b = STATE_MAP[sub.status]) !== null && _b !== void 0 ? _b : sub.status}`)
+                            .classList.add("uwtnsh-summary");
+                        renderHistory(makeChildNode(detail, "div"), sub, stored[sub.id]);
+                    });
+                    items.push({ button, text: `${title} ${sub.day} ${(_d = TYPE_LABELS[sub.type]) !== null && _d !== void 0 ? _d : ""}`.toLowerCase() });
+                }
+                search.addEventListener("input", () => {
+                    const q = search.value.trim().toLowerCase();
+                    for (const item of items)
+                        item.button.style.display = item.text.includes(q) ? "" : "none";
+                });
+                items[0].button.click();
+            };
+            // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+            toolbox.addMenuItem("nomination-status-history", {
+                label: "Contribution status history",
+                icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><line x1=\"8\" y1=\"6\" x2=\"21\" y2=\"6\"/><line x1=\"8\" y1=\"12\" x2=\"21\" y2=\"12\"/><line x1=\"8\" y1=\"18\" x2=\"21\" y2=\"18\"/><line x1=\"3\" y1=\"6\" x2=\"3.01\" y2=\"6\"/><line x1=\"3\" y1=\"12\" x2=\"3.01\" y2=\"12\"/><line x1=\"3\" y1=\"18\" x2=\"3.01\" y2=\"18\"/></svg>",
+                callback: () => { void openHistoryWindow(); },
+            });
             const checkNominationChanges = async (submissions) => {
                 const env_6 = { stack: [], error: void 0, hasError: false };
                 try {
@@ -8020,7 +8262,6 @@ var nominationStatusHistory = () => {
                     const idb = __addDisposableResource(env_7, await toolbox.openIDB("history", "readwrite"), false);
                     const nom = await idb.get(id);
                     const history = nom.statusHistory;
-                    const oldStatus = history.length ? history[history.length - 1].status : null;
                     const timestamp = Date.now();
                     const newStatus = historyOnly ? nom.status : status;
                     const newEntry = {
@@ -8038,10 +8279,6 @@ var nominationStatusHistory = () => {
                         statusHistory: history,
                     });
                     idb.commit();
-                    const box = document.querySelector(".uwtnsh-dropdown");
-                    if (box) {
-                        addEventToHistoryDisplay(box, newEntry, oldStatus);
-                    }
                 }
                 catch (e_7) {
                     env_7.error = e_7;
@@ -9453,7 +9690,7 @@ var reviewMapMods = () => {
             // addon used (__ngContext__, nia-map, marker drag hooks) no longer exist.
             let pano = null;
             let rmmToken = 0;
-            const rmm = { circles: [], overlay: null, idleListener: null };
+            const rmm = { circles: [], overlay: null, idleListener: null, mapDiv: null, watcher: null };
             const pdoc = () => uwtPageWin.document;
             const rmmFindFiber = (el) => {
                 const key = Object.getOwnPropertyNames(el || {}).find(k => k.startsWith("__reactFiber$"));
@@ -9478,18 +9715,33 @@ var reviewMapMods = () => {
                 }
                 return null;
             };
+            // Tried in order. Edit reviews: the location edit card's map, then the "live map" slot (the one Open In
+            // places its buttons below), then any map in the edit flow.
             const rmmSelectors = {
-                NEW: uwtReviewMapSelectors.NEW,
-                EDIT: "[data-testid=\"review-edit-flow\"] .wf-review-card--map [data-testid=\"base-map-container\"]",
+                NEW: [uwtReviewMapSelectors.NEW],
+                EDIT: [
+                    "[data-testid=\"review-edit-flow\"] .wf-review-card--map [data-testid=\"base-map-container\"]",
+                    uwtReviewMapSelectors.EDIT,
+                    "[data-testid=\"review-edit-flow\"] [data-testid=\"base-map-container\"]",
+                ],
             };
-            const rmmWaitForMap = async (type) => {
-                for (let i = 0; i < 120; i++) { // about 30 seconds
-                    const container = pdoc().querySelector(rmmSelectors[type]);
+            const rmmFindMapNow = (type) => {
+                const list = rmmSelectors[type];
+                for (let i = 0; i < list.length; i++) {
+                    const container = pdoc().querySelector(list[i]);
                     if (container) {
                         const map = rmmResolveMap(container);
                         if (map)
-                            return { container, map };
+                            return { container, map, selectorIndex: i };
                     }
+                }
+                return null;
+            };
+            const rmmWaitForMap = async (type) => {
+                for (let i = 0; i < 120; i++) { // about 30 seconds
+                    const found = rmmFindMapNow(type);
+                    if (found)
+                        return found;
                     await new Promise(r => setTimeout(r, 250));
                 }
                 return null;
@@ -9529,6 +9781,11 @@ var reviewMapMods = () => {
                     catch ( /* ignore */_b) { /* ignore */ }
                     rmm.idleListener = null;
                 }
+                if (rmm.watcher !== null) {
+                    window.clearInterval(rmm.watcher);
+                    rmm.watcher = null;
+                }
+                rmm.mapDiv = null;
                 for (const el of pdoc().querySelectorAll(".uwtrmm-warning-box, .uwtrmm-close-warning"))
                     el.remove();
                 unloadPano();
@@ -9599,9 +9856,13 @@ var reviewMapMods = () => {
                 }
             };
             const addMapMods = async (candidate) => {
+                // Every new review invalidates the previous one, also reviews that get no map mods: a skipped review does not
+                // submit anything, and the map object is reused, so its grid and circles (and a wait for its map that is
+                // still running) must not carry over to this review.
+                const myToken = ++rmmToken;
+                rmmCleanup();
                 if (candidate.type !== "NEW" && !(candidate.type === "EDIT" && candidate.locationEdits && candidate.locationEdits.length > 0))
                     return;
-                const myToken = ++rmmToken;
                 for (let i = 0; i < 100 && !(uwtPageWin.google && uwtPageWin.google.maps); i++) {
                     await new Promise(r => setTimeout(r, 200));
                 }
@@ -9616,8 +9877,10 @@ var reviewMapMods = () => {
                 }
                 if (myToken !== rmmToken)
                     return; // a newer review has started
-                const { container, map } = found;
+                const { container, map, selectorIndex } = found;
+                logger.info(`Review Map Mods: found the ${candidate.type} review map (selector ${selectorIndex + 1} of ${rmmSelectors[candidate.type].length})`);
                 rmmCleanup();
+                rmm.mapDiv = map.getDiv();
                 if (candidate.type === "NEW")
                     await modifyNewReviewMap(container, map, candidate);
                 if (myToken !== rmmToken)
@@ -9651,12 +9914,24 @@ var reviewMapMods = () => {
                         await overlay.updateGrid(map, grids);
                     });
                 }
+                // The page may create a new map object while the review is open (for example when it switches between
+                // steps of an edit review). The one we decorated is then gone, so apply everything again to the new one.
+                rmm.watcher = window.setInterval(() => {
+                    if (myToken !== rmmToken)
+                        return;
+                    const live = rmmFindMapNow(candidate.type);
+                    if (live && rmm.mapDiv && live.map.getDiv() !== rmm.mapDiv) {
+                        logger.info("Review Map Mods: the review map was re-created; applying the mods again");
+                        void addMapMods(candidate);
+                    }
+                }, 1500);
                 if (Number.isFinite(candidate.lat) && Number.isFinite(candidate.lng)) {
                     // 22 m: new Powerspots within this distance of another Wayspot are rejected
                     if (config.get("renderCloseCircle"))
                         drawCircle(map, candidate, "blue", 22);
                     // 2 m: a moved location must be at least this far from the submitter's proposal
-                    if (config.get("renderMoveCircle"))
+                    // (not for edit reviews: there the reviewer picks one of the suggested locations, nothing is moved)
+                    if (config.get("renderMoveCircle") && candidate.type === "NEW")
                         drawCircle(map, candidate, "red", 2);
                     // only NEW reviews declare nearbyPortals in the types, but read it defensively for any review
                     const nearbyPortals = candidate.nearbyPortals;
@@ -10502,18 +10777,12 @@ var contributionManagementLayout = () => {
                 }
                 renderOverview(body, nominations);
             };
-            const addButton = async () => {
-                const body = await untilTruthy(() => document.body);
-                if (document.getElementById("uwtcml-button"))
-                    return;
-                const button = makeChildNode(body, "button");
-                button.id = "uwtcml-button";
-                button.type = "button";
-                button.title = "Edits by Wayspot";
-                button.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z\"/></svg>";
-                button.addEventListener("click", () => { void openOverview(); });
-            };
-            void addButton();
+            // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+            toolbox.addMenuItem("contribution-management-layout", {
+                label: "Edits by Wayspot",
+                icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M12 20h9\"/><path d=\"M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z\"/></svg>",
+                callback: () => { void openOverview(); },
+            });
             toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", (data) => {
                 if (data && data.submissions)
                     nominations = data.submissions;
@@ -10920,8 +11189,20 @@ var dynamicMapsEverywhere = () => {
                 const url = getStaticMapUrl(staticMap);
                 if (typeof url !== "undefined") {
                     // the page is scanned repeatedly; skip maps that are already showing this exact static map
-                    if (staticMap.__uwtTools_DME_url === url.href)
-                        return;
+                    if (staticMap.__uwtTools_DME_url === url.href) {
+                        if (typeof staticMap.__uwtTools_DME !== "undefined") {
+                            if (staticMap.__uwtTools_DME.container.isConnected) {
+                                // the page may have reset the element's classes, which would show the static map again
+                                staticMap.classList.add("uwtdme-hidden");
+                                return;
+                            }
+                            // the page removed our interactive map (it re-rendered the parent); build it again
+                            delete staticMap.__uwtTools_DME;
+                        }
+                        else {
+                            return;
+                        }
+                    }
                     staticMap.__uwtTools_DME_url = url.href;
                     const mapConfig = parseStaticMapUrl(url);
                     if (typeof mapConfig === "undefined")
@@ -10936,6 +11217,7 @@ var dynamicMapsEverywhere = () => {
                     if (typeof staticMap.__uwtTools_DME === "undefined") {
                         const node = document.createElement("div");
                         node.classList.add("uwtdme-container");
+                        node.__uwtTools_static = staticMap;
                         staticMap.parentElement.insertBefore(node, staticMap);
                         staticMap.__uwtTools_DME = createDynamicMap(node, mapConfig, chosenMapType);
                     }
@@ -10954,6 +11236,12 @@ var dynamicMapsEverywhere = () => {
             // the page's own Google Maps API (not the userscript sandbox's view of the window) must be loaded
             untilTruthy(() => { var _a; return (_a = uwtGoogle()) === null || _a === void 0 ? void 0 : _a.maps; }).then(() => {
                 const scan = () => {
+                    var _a;
+                    // remove interactive maps whose static map is gone (the page replaced it, for example for the next review)
+                    for (const c of document.querySelectorAll(".uwtdme-container")) {
+                        if (!((_a = c.__uwtTools_static) === null || _a === void 0 ? void 0 : _a.isConnected))
+                            c.remove();
+                    }
                     for (const map of document.querySelectorAll(STATIC_MAP_SELECTOR)) {
                         try {
                             replaceMap(map);
@@ -11401,6 +11689,17 @@ const matrix = (size) => {
 // directory of this script's GitHub repository:
 // <https://github.com/bilde2910/Wayfarer-Tools/blob/main/LICENSE>
 // If not, see <https://www.gnu.org/licenses/>.
+const STATUS_LABELS = {
+    [ContributionStatus.NOMINATED]: "In Queue",
+    [ContributionStatus.VOTING]: "In Voting",
+    [ContributionStatus.HELD]: "On Hold",
+    [ContributionStatus.ACCEPTED]: "Accepted",
+    [ContributionStatus.REJECTED]: "Rejected",
+    [ContributionStatus.DUPLICATE]: "Duplicate",
+    [ContributionStatus.WITHDRAWN]: "Withdrawn",
+    [ContributionStatus.APPEALED]: "Appealed",
+    [ContributionStatus.NIANTIC_REVIEW]: "Niantic Review",
+};
 var proximityBlock = () => {
     register()({
         id: "proximity-block",
@@ -11409,15 +11708,15 @@ var proximityBlock = () => {
         description: "Find other nearby nominations that are blocking, or would be blocked by, each nomination",
         defaultConfig: {},
         sessionData: {},
-        initialize: (toolbox, _logger, _config) => {
+        initialize: (toolbox, logger, _config) => {
+            // ---- redesign: the Contribution Management page (app-submissions-list-item tags, the details pane and
+            // Angular's internal data) this addon used to add labels and tables to is gone. The same information is
+            // now shown in a window opened from the Wayfarer Tools menu.
             let nominations = [];
-            const handleNominations = async (result) => {
+            let loaded = false;
+            const handleNominations = (result) => {
                 nominations = result.submissions.filter(s => s.type === ContributionType.NOMINATION);
-            };
-            const formatItem = (item) => {
-                const data = item.__ngContext__[22];
-                updateRejectionLabels(item, data);
-                item.addEventListener("click", () => interceptDetailsPane(data));
+                loaded = true;
             };
             const getConflictingS2L17Cells = (lat, lng) => {
                 const center = s2Geometry.S2.S2Cell.FromLatLng(s2Geometry.S2.L.LatLng(lat, lng), 17);
@@ -11446,41 +11745,20 @@ var proximityBlock = () => {
                     .filter(n => conflicting.includes(s2Geometry.S2.S2Cell.FromLatLng(n, 17).toString()));
                 return blockingNoms;
             };
-            const updateRejectionLabels = (item, nom) => {
-                // Remove uwftpb-blocked class if already present
-                const blockedTags = item.querySelectorAll(".uwftpb-blocked-tag");
-                for (let i = blockedTags.length - 1; i >= 0; i--)
-                    blockedTags[i].remove();
-                const hiddenTags = item.querySelectorAll(".uwftpb-blocked-hidden");
-                for (let i = hiddenTags.length - 1; i >= 0; i--)
-                    hiddenTags[i].classList.remove("uwftpb-blocked-hidden");
-                if (nom.type !== ContributionType.NOMINATION)
-                    return;
-                if (nom.status !== ContributionStatus.NOMINATED)
-                    return;
-                if (nom.upgraded)
-                    return;
-                // If the current Wayspot data is blocked by another in-voting nomination, mark it as "proximity blocked".
-                const blockers = proximityBlockingFor(nom).filter(n => n.status === ContributionStatus.VOTING);
-                if (blockers.length > 0) {
-                    const nominationTagSet = item.querySelector("app-submission-tag-set");
-                    if (nominationTagSet) {
-                        // Hide existing tag
-                        const existingTags = nominationTagSet.querySelectorAll("app-submission-tag");
-                        if (existingTags.length === 1) {
-                            existingTags[0].classList.add("uwftpb-blocked-hidden");
-                        }
-                        // Create new tag
-                        const newTag = makeChildNode(nominationTagSet, "app-submission-tag");
-                        newTag.classList.add("mr-1", "uwftpb-blocked-tag");
-                        const newTagContent = makeChildNode(newTag, "div");
-                        newTagContent.classList.add("submission-tag", "ng-star-inserted");
-                        const newSpan = makeChildNode(newTagContent, "span", "Proximity Blocked");
-                        newSpan.classList.add("submission-tag--queue");
-                    }
-                }
+            const isActive = (n) => !n.upgraded && (n.status === ContributionStatus.NOMINATED ||
+                n.status === ContributionStatus.VOTING ||
+                n.status === ContributionStatus.HELD);
+            // If the current Wayspot data is blocked by another in-voting nomination, it is "proximity blocked".
+            const isProximityBlocked = (nom, blocking) => nom.status === ContributionStatus.NOMINATED && !nom.upgraded &&
+                blocking.some(n => n.status === ContributionStatus.VOTING);
+            const makeTag = (label, style) => {
+                const span = document.createElement("span");
+                span.className = `uwtpb-tag uwtpb-tag--${style}`;
+                span.textContent = label;
+                return span;
             };
             const makeTable = (title, nominations) => {
+                var _a;
                 const container = document.createElement("div");
                 container.classList.add("uwftpb-container");
                 const header = makeChildNode(container, "div", title);
@@ -11494,36 +11772,19 @@ var proximityBlock = () => {
                     const row = table.insertRow();
                     makeChildNode(row, "td", nom.day);
                     makeChildNode(row, "td", nom.title);
-                    const cell3 = makeChildNode(row, "td");
-                    cell3.appendChild(generateNominationTag(nom));
+                    makeChildNode(makeChildNode(row, "td"), "span").replaceWith(makeTag((_a = STATUS_LABELS[nom.status]) !== null && _a !== void 0 ? _a : "Unknown", "queue"));
                 }
                 return container;
             };
-            const generateNominationTag = (data) => {
-                const tagText = (() => {
-                    switch (data.status) {
-                        case ContributionStatus.NOMINATED: return "In Queue";
-                        case ContributionStatus.VOTING: return "In Voting";
-                        case ContributionStatus.HELD: return "On Hold";
-                        default: return "Unknown";
-                    }
-                })();
-                const asTag = document.createElement("app-submission-tag");
-                const subTag = makeChildNode(asTag, "div");
-                subTag.classList.add("submission-tag");
-                makeChildNode(subTag, "span", tagText).classList.add("submission-tag--queue");
-                return asTag;
-            };
-            const interceptDetailsPane = (data) => {
-                const containers = document.querySelectorAll(".uwftpb-container");
-                for (let i = containers.length - 1; i >= 0; i--)
-                    containers[i].remove();
-                if (data.type !== ContributionType.NOMINATION)
-                    return;
-                const blocking = proximityBlockingFor(data);
-                if (blocking.length === 0)
-                    return;
-                const ref = document.querySelector("app-details-pane img");
+            const renderDetail = (detail, data, blocking) => {
+                var _a;
+                detail.innerHTML = "";
+                const head = makeChildNode(detail, "div");
+                head.className = "uwtpb-head";
+                makeChildNode(head, "h3", data.title || "(untitled)");
+                head.appendChild(makeTag((_a = STATUS_LABELS[data.status]) !== null && _a !== void 0 ? _a : data.status, "queue"));
+                if (isProximityBlocked(data, blocking))
+                    head.appendChild(makeTag("Proximity Blocked", "blocked"));
                 const blockedBy = [];
                 const willBlock = [];
                 for (const other of blocking) {
@@ -11536,17 +11797,104 @@ var proximityBlock = () => {
                 }
                 if (blockedBy.length && data.status !== ContributionStatus.VOTING) {
                     const header = `Currently proximity blocked by (${blockedBy.length})`;
-                    ref.parentElement.insertBefore(makeTable(header, blockedBy), ref);
+                    detail.appendChild(makeTable(header, blockedBy));
                 }
                 if (willBlock.length) {
                     const header = data.status === ContributionStatus.VOTING
                         ? `Currently proximity blocking (${willBlock.length})`
                         : `Will proximity block or be blocked by (${willBlock.length})`;
-                    ref.parentElement.insertBefore(makeTable(header, willBlock), ref);
+                    detail.appendChild(makeTable(header, willBlock));
+                }
+                if (!detail.querySelector(".uwftpb-container")) {
+                    makeChildNode(detail, "p", "No other nominations currently block or are blocked by this one.");
                 }
             };
+            const openProximityWindow = async () => {
+                const { container, dismiss } = await toolbox.createModal("uwtpb-modal");
+                if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+                    container.classList.add("uwt-dark");
+                }
+                const close = makeChildNode(container, "button", "\u00d7");
+                close.className = "uwtpb-x";
+                close.addEventListener("click", dismiss);
+                makeChildNode(container, "h2", "Proximity blocks");
+                const body = makeChildNode(container, "div");
+                body.className = "uwtpb-body";
+                if (!loaded) {
+                    makeChildNode(body, "p", "Loading nominations...");
+                    try {
+                        const data = await toolbox.makeRequest("GET", "/api/v1/vault/manage");
+                        if (data && data.submissions)
+                            handleNominations(data);
+                    }
+                    catch (e) {
+                        logger.error(e);
+                    }
+                    body.innerHTML = "";
+                }
+                if (!loaded) {
+                    makeChildNode(body, "p", "Could not load your nominations.");
+                    return;
+                }
+                const side = makeChildNode(body, "div");
+                side.className = "uwtpb-side";
+                const allLabel = makeChildNode(side, "label");
+                allLabel.className = "uwtpb-all";
+                const allBox = makeChildNode(allLabel, "input");
+                allBox.type = "checkbox";
+                allLabel.appendChild(document.createTextNode(" Include nominations that are no longer active"));
+                const list = makeChildNode(side, "div");
+                list.className = "uwtpb-list";
+                const detail = makeChildNode(body, "div");
+                detail.className = "uwtpb-detail";
+                const cache = new Map();
+                const relationsFor = (nom) => {
+                    let r = cache.get(nom.id);
+                    if (!r) {
+                        r = proximityBlockingFor(nom);
+                        cache.set(nom.id, r);
+                    }
+                    return r;
+                };
+                const rebuild = () => {
+                    var _a;
+                    list.innerHTML = "";
+                    detail.innerHTML = "";
+                    const related = nominations
+                        .filter(n => allBox.checked || isActive(n))
+                        .map(n => ({ nom: n, blocking: relationsFor(n) }))
+                        .filter(e => e.blocking.length > 0)
+                        .sort((a, b) => b.nom.order - a.nom.order);
+                    if (related.length === 0) {
+                        makeChildNode(list, "p", "None of your nominations are currently affected by proximity blocking.");
+                        return;
+                    }
+                    const buttons = [];
+                    for (const { nom, blocking } of related) {
+                        const button = makeChildNode(list, "button");
+                        button.className = "uwtpb-item";
+                        makeChildNode(button, "span", nom.title || "(untitled)");
+                        const blocked = isProximityBlocked(nom, blocking);
+                        makeChildNode(button, "small", `${(_a = STATUS_LABELS[nom.status]) !== null && _a !== void 0 ? _a : nom.status}${blocked ? " - Proximity Blocked" : ""}`);
+                        button.addEventListener("click", () => {
+                            for (const b of buttons)
+                                b.classList.toggle("uwtpb-active", b === button);
+                            renderDetail(detail, nom, blocking);
+                        });
+                        buttons.push(button);
+                    }
+                    buttons[0].click();
+                };
+                allBox.addEventListener("change", rebuild);
+                rebuild();
+            };
+            // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+            toolbox.addMenuItem("proximity-block", {
+                label: "Proximity blocks",
+                icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"22\" y1=\"12\" x2=\"18\" y2=\"12\"/><line x1=\"6\" y1=\"12\" x2=\"2\" y2=\"12\"/><line x1=\"12\" y1=\"6\" x2=\"12\" y2=\"2\"/><line x1=\"12\" y1=\"22\" x2=\"12\" y2=\"18\"/></svg>",
+                callback: () => { void openProximityWindow(); },
+            });
             toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", handleNominations);
-            toolbox.observeAddedNodes("APP-SUBMISSIONS-LIST-ITEM", formatItem);
         },
     });
 };// Copyright 2025 bilde2910
@@ -12047,48 +12395,92 @@ var nominationCoordinates = () => {
         description: "Adds coordinates on the contribution screen for all contributions, clickable to copy them to the clipboard",
         defaultConfig: {},
         sessionData: {},
-        initialize: (toolbox, _logger, _config) => {
-            const detectAppListItems = async () => {
-                const parentContainer = await untilTruthy(() => document.querySelector(".submissions"));
-                // Scan existing elements
-                const existingItems = parentContainer.querySelectorAll("app-submissions-list-item");
-                for (const item of existingItems)
-                    addListItemListener(item);
-                // Set up MutationObserver for new elements
-                const observer = new MutationObserver((mutations) => {
-                    for (const mutation of mutations) {
-                        for (const node of mutation.addedNodes) {
-                            if (node.nodeName === "APP-SUBMISSIONS-LIST-ITEM") {
-                                addListItemListener(node);
-                            }
-                        }
-                    }
-                });
-                observer.observe(parentContainer, {
-                    childList: true,
-                    subtree: true,
-                });
-            };
-            const addListItemListener = (item) => {
-                const data = item.__ngContext__[22];
-                item.addEventListener("click", () => {
-                    void addCoordinates(data);
-                });
-            };
-            const addCoordinates = async (data) => {
+        initialize: (toolbox, logger, _config) => {
+            // ---- redesign: the details pane (app-submissions app-details-pane) whose location line used to get the
+            // coordinates is gone. A button at the bottom left opens a window listing all contributions with their
+            // location and coordinates; clicking the coordinates copies them to the clipboard.
+            let nominations = null;
+            const coordinatesOf = (data) => {
                 const lat = "lat" in data.poiData ? data.poiData.lat : data.lat;
                 const lng = "lng" in data.poiData ? data.poiData.lng : data.lng;
-                const locationP = await untilTruthy(() => document.querySelector("app-submissions app-details-pane p"));
-                const coordinates = `${lat},${lng}`;
-                const newText = `${data.city} ${data.state} (${coordinates})`;
-                locationP.textContent = newText;
-                locationP.style.cursor = "pointer";
-                locationP.title = "Copy coordinates to clipboard";
-                locationP.addEventListener("click", () => {
-                    void navigator.clipboard.writeText(coordinates);
+                return `${lat},${lng}`;
+            };
+            const openWindow = async () => {
+                const { container, dismiss } = await toolbox.createModal("uwtnc-modal");
+                if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+                    container.classList.add("uwt-dark");
+                }
+                const close = makeChildNode(container, "button", "\u00d7");
+                close.className = "uwtnc-x";
+                close.addEventListener("click", dismiss);
+                makeChildNode(container, "h2", "Contribution coordinates");
+                const body = makeChildNode(container, "div");
+                body.className = "uwtnc-body";
+                if (nominations === null) {
+                    makeChildNode(body, "p", "Loading contributions...");
+                    try {
+                        const data = await toolbox.makeRequest("GET", "/api/v1/vault/manage");
+                        if (data && data.submissions)
+                            nominations = data.submissions;
+                    }
+                    catch (e) {
+                        logger.error(e);
+                    }
+                    body.innerHTML = "";
+                }
+                if (nominations === null) {
+                    makeChildNode(body, "p", "Could not load your contributions.");
+                    return;
+                }
+                makeChildNode(body, "p", "Click the coordinates of a contribution to copy them to the clipboard. For edits and photos, the coordinates are those of the Wayspot.")
+                    .className = "uwtnc-help";
+                const search = makeChildNode(body, "input");
+                search.type = "text";
+                search.placeholder = "Search by title or location";
+                const scroller = makeChildNode(body, "div");
+                scroller.className = "uwtnc-scroll";
+                const table = makeChildNode(scroller, "table");
+                table.className = "uwtnc-table";
+                const headRow = makeChildNode(makeChildNode(table, "thead"), "tr");
+                for (const label of ["Title", "Type", "Date", "Location", "Coordinates"])
+                    makeChildNode(headRow, "th", label);
+                const tbody = makeChildNode(table, "tbody");
+                const rows = [];
+                for (const data of [...nominations].sort((a, b) => b.order - a.order)) {
+                    const title = data.title || ("title" in data.poiData ? data.poiData.title : "") || "(untitled)";
+                    const coordinates = coordinatesOf(data);
+                    const row = makeChildNode(tbody, "tr");
+                    makeChildNode(row, "td", title);
+                    makeChildNode(row, "td", data.type.replace(/_/g, " ").toLowerCase());
+                    makeChildNode(row, "td", data.day);
+                    const location = `${data.city} ${data.state}`.trim();
+                    makeChildNode(row, "td", location);
+                    const cell = makeChildNode(row, "td", coordinates);
+                    cell.className = "uwtnc-coordinates";
+                    cell.title = "Copy coordinates to clipboard";
+                    cell.addEventListener("click", () => {
+                        void navigator.clipboard.writeText(coordinates);
+                        cell.textContent = "Copied!";
+                        setTimeout(() => { cell.textContent = coordinates; }, 1200);
+                    });
+                    rows.push({ row, text: `${title} ${location}`.toLowerCase() });
+                }
+                search.addEventListener("input", () => {
+                    const q = search.value.trim().toLowerCase();
+                    for (const r of rows)
+                        r.row.style.display = r.text.includes(q) ? "" : "none";
                 });
             };
-            toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", detectAppListItems);
+            // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+            toolbox.addMenuItem("nomination-coordinates", {
+                label: "Contribution coordinates",
+                icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z\"/><circle cx=\"12\" cy=\"10\" r=\"3\"/></svg>",
+                callback: () => { void openWindow(); },
+            });
+            toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", (data) => {
+                if (data && data.submissions)
+                    nominations = data.submissions;
+            });
         },
     });
 };// Copyright 2026 tehstone, bilde2910
@@ -12409,7 +12801,7 @@ init();})(window,markerClusterer,agGrid,proj4,Diff);
 (() => {
   const addStyle = () => {
     const elem = document.createElement("style");
-    elem.innerHTML = (`#uwtrh-button{position:fixed;left:112px;bottom:64px;z-index:99990;width:40px;height:40px;border-radius:50%;border:1px solid rgba(128,128,128,.5);background:#111827;color:#f9fafb;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;opacity:.75}#uwtrh-button:hover{opacity:1}.uwtrh-modal{position:relative;display:flex;flex-direction:column;background:#fff !important;color:#111827 !important;font-size:15px;width:min(1100px,100vw - 50px);height:min(760px,100vh - 50px);max-width:none !important;max-height:none !important}.uwtrh-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtrh-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.6rem}.uwtrh-modal .uwtrh-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtrh-modal .uwtrh-x:hover{opacity:1}.uwtrh-modal .uwtrh-count{margin:.4rem 0}.uwtrh-modal .uwtrh-table{flex:1 1 auto;height:auto;min-height:320px}.uwtrh-idb{display:flex;align-items:center;flex-wrap:wrap;gap:.25rem}.uwtrh-idb button{background-color:#e5e5e5;border:none;color:#ff4713;padding:2px 6px;margin:3px;text-align:center;text-decoration:none;display:inline-block;font-size:14px}.dark .uwtrh-idb button{background-color:#404040;color:#20b8e3}.uwtrh-table{display:none;height:500px}#uwtns-button{position:fixed;left:64px;bottom:64px;z-index:99990;width:40px;height:40px;border-radius:50%;border:1px solid rgba(128,128,128,.5);background:#111827;color:#f9fafb;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;opacity:.75}#uwtns-button:hover{opacity:1}.uwtns-modal{position:relative;background:#fff !important;color:#111827 !important;font-size:15px;width:min(760px,100vw - 50px)}.uwtns-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtns-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.8rem}.uwtns-modal .uwtns-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtns-modal .uwtns-x:hover{opacity:1}#uwftns-export{display:flex;gap:.5rem;margin-top:1rem}.uwtns-stats-table th,.uwtns-stats-table td{border:1px solid rgba(128,128,128,.6);padding:1pt 5pt}.uwtns-stats-table{width:100%}.uwtns-stats-table th:first-child,.uwtns-stats-table td:first-child{text-align:left}.uwtns-stats-table th:not(:first-child),.uwtns-stats-table td:not(:first-child){text-align:center}.uwftmr-div{color:#333;margin-left:2em;padding-top:.3em;text-align:center;display:block}.dark .uwftmr-div{color:#ddd}.uwftmr-counter{font-size:20px;color:#20b8e3}.uwftmr-sbb{color:#20b8e3}.uwftcore-checkbox{display:grid;grid-template-columns:1em auto;gap:.5em;line-height:1.1;margin-bottom:.5em;cursor:pointer}.uwftcore-checkbox input[type=checkbox]{appearance:none;font:inherit;color:currentColor;width:1.15em;height:1.15em;border:.15em solid currentColor;border-radius:.15em;display:grid;place-content:center}.uwftcore-checkbox input[type=checkbox]::before{content:"";width:.65em;height:.65em;transform:scale(0);transition:120ms transform ease-in-out;box-shadow:inset 1em 1em #ff6d38}.uwftcore-checkbox input[type=checkbox]:checked::before{transform:scale(1)}.uwftcore-checkbox input[type=checkbox]:disabled::before{box-shadow:inset 1em 1em hsl(16,0%,61%)}.uwftcore-plugin{margin-bottom:1em}.uwftcore-plugin-title{font-weight:bold}.uwftcore-authors{font-size:.8em}.uwftcore-description{font-size:.8em;opacity:.5}.uwftcore-depends{font-size:.8em}.uwftcore-depend-line{font-size:.8em}.uwftcore-refresh-reminder{margin-bottom:1em}.uwftcore-help-available{cursor:context-menu;text-decoration:underline dotted #7f7f7f}.uwftcore-discord-link-box{font-weight:bold}.uwftcore-discord-link-box img{height:1em;display:inline-block;margin-right:5px;margin-top:-4px}.uwftcore-option-line{margin-bottom:1rem}.dark input.uwftcore-fix,.dark select.uwftcore-fix,.dark span.uwftcore-fix{background-color:#333}input.uwftcore-fix,select.uwftcore-fix,span.uwftcore-fix{padding:2px 5px}input.uwftcore-ui-large-input{padding:10px 10px;margin:10px 10px 10px 0;border-radius:.375rem;font-size:16px}.uwftcore-ui-button{background-color:#e5e5e5;border:none;color:#ff4713;padding:10px 10px;margin:10px 10px 10px 0;border-radius:.375rem;text-align:center;text-decoration:none;display:inline-block;font-size:16px;cursor:pointer}.uwftcore-ui-button:hover{background-color:hsl(0,1%,75%);transition:.2s}.dark .uwftcore-ui-button{background-color:hsl(0,1%,25%);color:#20b8e3}.dark .uwftcore-ui-button:hover{background-color:#707070;transition:.2s}.uwftcore-ui-button-active{background-color:hsl(0,1%,67%)}.dark .uwftcore-ui-button-active{background-color:hsl(0,1%,33%)}#uwftcore-notifications{position:absolute;bottom:1em;right:1em;width:30em;z-index:100}.uwftcore-notification{font-weight:bold;border-radius:1em;padding:1em;margin-top:1.5em;color:#fff}.uwftcore-notify-content-wrapper{display:flex;align-items:center}.uwftcore-notify-icon-wrapper{width:30px}.uwftcore-notify-icon-wrapper>img{width:20px;height:20px}.uwftcore-nbg-red{background-color:#c00}.uwftcore-nbg-red a{color:#fcc}.uwftcore-nbg-green{background-color:hsl(153,90%,36%)}.uwftcore-nbg-blue{background-color:hsl(227,74%,39%)}.uwftcore-nbg-purple{background-color:hsl(258,90%,66%)}.uwftcore-nbg-gold{background-color:hsl(43,74%,49%)}.uwftcore-nbg-gray{background-color:hsl(0,0%,50%)}.uwftcore-nbg-brown{background-color:hsl(30,38%,33%)}.uwftcore-nbg-dark-gray{background-color:#666}.uwftcore-sidebar-icon{width:24px}.uwftcore-fullscreen-overlay{position:fixed;top:0;left:0;height:100dvh;width:100dvw;background-color:rgba(0,0,0,.5);z-index:100000}.uwftcore-fullscreen-inner{position:absolute;top:50%;left:50%;transform:translateX(-50%) translateY(-50%);overflow-x:hidden;overflow-y:scroll;background-color:#fff;padding:20px;max-width:900px;max-height:500px}.uwftcore-modal-common{width:calc(100vw - 50px);height:calc(100vh - 50px)}.uwftcore-modal-common h3{font-weight:bold;margin:10px auto}.uwftcore-modal-common>p{margin:10px auto}.dark .uwftcore-fullscreen-inner{background-color:#333}.uwftcore-import-options{max-width:550px;height:initial}.uwftcore-import-method{background-color:#e5e5e5;border:none;padding:10px 10px;cursor:pointer;width:100%;background-size:30px;background-position:15px;background-repeat:no-repeat;margin-bottom:10px}.uwftcore-import-method .uwftcore-import-method-title{color:#ff4713;font-size:16px}.uwftcore-import-method .uwftcore-import-method-desc{font-size:12px}.dark .uwftcore-import-method{background-color:#404040}.dark .uwftcore-import-method .uwftcore-import-method-title{color:#20b8e3}#uwt-status-stack{position:fixed;left:16px;bottom:150px;z-index:99990;display:flex;flex-direction:column;align-items:flex-start;gap:6px}.uwt-pill{display:flex;align-items:center;gap:.5em;margin:0;padding:.25em .8em;border-radius:999px;background:rgba(17,24,39,.92);color:#f9fafb;box-shadow:0 2px 8px rgba(0,0,0,.4);font-size:14px;line-height:1.2;white-space:nowrap;user-select:none}.uwt-pill p{margin:0}.uwt-pill p:nth-child(2){font-size:18px;font-weight:bold;font-variant-numeric:tabular-nums}.uwtnm-text{font-size:18px}.uwtnm-toggle{display:none}.uwtnm-wrap-collapsible{margin-bottom:1.2rem}#uwtnm-collapsed-map{display:none}.uwtnm-lbl-toggle{display:block;font-weight:bold;font-family:monospace;font-size:1.2rem;text-transform:uppercase;text-align:center;padding:1rem;color:#fff;background:#df471c;cursor:pointer;border-radius:7px;transition:all .25s ease-out}.uwtnm-lbl-toggle:hover{color:#d3d3d3}.uwtnm-lbl-toggle::before{content:" ";display:inline-block;border-top:5px solid rgba(0,0,0,0);border-bottom:5px solid rgba(0,0,0,0);border-left:5px solid currentColor;vertical-align:middle;margin-right:.7rem;transform:translateY(-2px);transition:transform .2s ease-out}.uwtnm-toggle:checked+.uwtnm-lbl-toggle::before{transform:rotate(90deg) translateX(-3px)}.uwtnm-collapsible-content{max-height:0px;overflow:hidden;transition:max-height .25s ease-in-out}.uwtnm-toggle:checked+.uwtnm-lbl-toggle+.uwtnm-collapsible-content{max-height:9999999pt}.uwtnm-toggle:checked+.uwtnm-lbl-toggle{border-bottom-right-radius:0;border-bottom-left-radius:0}.uwtnm-map{height:400px}.uwtoi-label{font-weight:bold}.uwtoi-container{margin-bottom:10px}.uwtoi-dupe-map{padding:0 1rem;margin-top:-1rem}.uwtoi-linkspan::before{content:" · "}.uwtoi-linkspan:nth-child(2)::before{content:""}.uwtoi-experimental{color:#ff8c00;position:relative;display:inline-block}.uwtoi-tttitle{color:#ff8c00;font-weight:bold}.uwtoi-experimental .uwtoi-tooltip{visibility:hidden;width:320px;background-color:rgba(0,0,0,.8);color:#fff;text-align:center;padding:12px;position:absolute;z-index:1;bottom:150%;left:50%;margin-left:-160px;border-radius:10px;pointer-events:none}.uwtoi-experimental .uwtoi-tooltip::after{content:"";position:absolute;top:100%;left:50%;z-index:1;margin-left:-10px;border-width:10px;border-style:solid;border-color:rgba(0,0,0,.8) rgba(0,0,0,0) rgba(0,0,0,0) rgba(0,0,0,0)}.uwtoi-experimental:hover .uwtoi-tooltip{visibility:visible}.uwtoi-address{font-size:1.1em;font-weight:bold;color:#000}.dark .uwtoi-address{color:#fff}.uwftes-text{font-size:18px}.uwftes-count{font-size:18px;display:flex;margin:0px 0px 0px 0px}.uwftes-parent{display:flex;justify-content:space-between;margin:16px 0px 0px}.uwtkr2-eds-highlighted{border-width:1px;border-color:#df471c}.dark .uwtkr2-eds-highlighted{border-color:#20b8e3}.uwtkr2-eds-btn-key::before,.uwtkr2-key-label,.uwtkr2-key-span{color:#ff6d38;font-family:monospace;text-transform:none;display:inline-block}.uwtkr2-key-span-wildcard{color:#20b8e3}.uwtkr2-eds-btn-key-no-highlight::before{color:#000}.dark .uwtkr2-eds-btn-key-no-highlight::before{color:#fff}.uwtkr2-eds-btn-key-pad::before,.uwtkr2-key-label{margin-right:5px}.uwtkr2-eds-btn-key.is-selected::before,.uwtkr2-eds-btn-key.wf-button--primary::before{color:#000}.uwtkr2-photo-card-label{font-size:1.9em;display:inline-block;padding:0 .5em}.uwtkr2-eds-key-bracket-A::before{content:"A"}.uwtkr2-eds-key-bracket-B::before{content:"B"}.uwtkr2-eds-key-bracket-C::before{content:"C"}.uwtkr2-eds-key-bracket-D::before{content:"D"}.uwtkr2-eds-key-bracket-E::before{content:"E"}.uwtkr2-eds-key-bracket-F::before{content:"F"}.uwtkr2-eds-key-bracket-G::before{content:"G"}.uwtkr2-eds-key-bracket-H::before{content:"H"}.uwtkr2-eds-key-bracket-I::before{content:"I"}.uwtkr2-eds-key-bracket-J::before{content:"J"}.uwtkr2-eds-key-bracket-K::before{content:"K"}.uwtkr2-eds-key-bracket-L::before{content:"L"}.uwtkr2-eds-key-bracket-M::before{content:"M"}.uwtkr2-eds-key-bracket-N::before{content:"N"}.uwtkr2-eds-key-bracket-O::before{content:"O"}.uwtkr2-eds-key-bracket-P::before{content:"P"}.uwtkr2-eds-key-bracket-Q::before{content:"Q"}.uwtkr2-eds-key-bracket-R::before{content:"R"}.uwtkr2-eds-key-bracket-S::before{content:"S"}.uwtkr2-eds-key-bracket-T::before{content:"T"}.uwtkr2-eds-key-bracket-U::before{content:"U"}.uwtkr2-eds-key-bracket-V::before{content:"V"}.uwtkr2-eds-key-bracket-W::before{content:"W"}.uwtkr2-eds-key-bracket-X::before{content:"X"}.uwtkr2-eds-key-bracket-Y::before{content:"Y"}.uwtkr2-eds-key-bracket-Z::before{content:"Z"}.uwtkr2-eds-key-bracket-0::before{content:"0"}.uwtkr2-eds-key-bracket-1::before{content:"1"}.uwtkr2-eds-key-bracket-2::before{content:"2"}.uwtkr2-eds-key-bracket-3::before{content:"3"}.uwtkr2-eds-key-bracket-4::before{content:"4"}.uwtkr2-eds-key-bracket-5::before{content:"5"}.uwtkr2-eds-key-bracket-6::before{content:"6"}.uwtkr2-eds-key-bracket-7::before{content:"7"}.uwtkr2-eds-key-bracket-8::before{content:"8"}.uwtkr2-eds-key-bracket-9::before{content:"9"}.uwtkr2-eds-key-bracket-Esc::before{content:"Esc"}.uwtkr2-eds-key-bracket-Tab::before{content:"Tab"}.uwtkr2-eds-key-bracket-Enter::before{content:"Enter"}.uwtkr2-dupe-key-box{width:0;z-index:10}.uwtkr2-dupe-key-box>div{width:1.7em;margin:5px;text-align:center;font-weight:bold;font-size:1.3em;border:1px solid #000;pointer-events:none;background:rgba(0,0,0,.5);color:#ff6d38}.uwtkr2-card app-review-text-diff{display:inline-block}.uwtrct-outer{position:fixed;left:16px;bottom:112px;z-index:99990;display:flex;align-items:center;gap:.5em;margin:0;padding:.25em .8em;border-radius:999px;background:rgba(17,24,39,.92);color:#f9fafb;box-shadow:0 2px 8px rgba(0,0,0,.4);font-size:14px;line-height:1.2;cursor:pointer;user-select:none}.uwtrct-outer p{margin:0}.uwtrct-outer p:nth-child(2){font-size:18px;font-weight:bold;color:#20b8e3;font-variant-numeric:tabular-nums}.uwtemli-modal{text-align:center}.uwtemli-modal h2{margin-bottom:10px}.uwtegas-options-modal{max-width:700px;height:initial}.uwtegas-table{width:100%}.uwtegas-table td{border:none}.uwtegas-table input{background-color:#ddd;width:100%;padding:5px}.dark .uwtegas-table input{background-color:#222}.uwtegas-cancel-btn{color:#000}.dark .uwtegas-cancel-btn{color:red}.uwftat-outer p:nth-child(2){color:#20b8e3}.uwtdme-hidden{display:none !important}.uwtwsr-root-new{margin-top:-1rem;grid-gap:1rem !important}.uwtwsr-root-new app-photo-b img{margin:auto}.uwtwsr-root-new .wf-review-card{height:initial;max-height:380px}.uwtwsr-root-new #check-duplicates-card{max-height:initial}.uwtwsr-root-new .wf-image-modal img{max-height:calc((100dvh - 440px)/2)}@media(max-width: 2000px){.uwtwsr-root-new .action-buttons-row{flex-direction:column !important;justify-content:initial !important}}.uwtwsr-thumbs-row{display:flex;flex-direction:row}.uwtwsr-root-new .dont-know-button{margin-left:0 !important;padding:.375rem !important}.uwtwsr-root-new .question-title .question-subtitle-tooltip{margin-left:.5rem;line-height:1.6rem}.uwtwsr-root-new app-question-card .main-section-container{justify-content:space-between}.uwftbdiff-differs{border-bottom:2px solid #ff6d38;background-color:rgba(255,109,56,.3)}#uwtcml-button{position:fixed;left:160px;bottom:64px;z-index:99990;width:40px;height:40px;border-radius:50%;border:1px solid rgba(128,128,128,.5);background:#111827;color:#f9fafb;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;opacity:.75}#uwtcml-button:hover{opacity:1}.uwtcml-modal{position:relative;display:flex;flex-direction:column;background:#fff !important;color:#111827 !important;font-size:15px;width:min(1100px,100vw - 50px);height:min(760px,100vh - 50px);max-width:none !important;max-height:none !important}.uwtcml-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtcml-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.6rem}.uwtcml-modal .uwtcml-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtcml-modal .uwtcml-x:hover{opacity:1}.uwtcml-body{display:flex;flex:1 1 auto;min-height:0;gap:16px}.uwtcml-side{display:flex;flex-direction:column;flex:0 0 280px;min-height:0;gap:8px}.uwtcml-side input{border:1px solid #9ca3af;border-radius:4px;padding:4px 8px;background:#fff;color:#111827}.uwtcml-list{overflow-y:auto;display:flex;flex-direction:column;gap:2px}.uwtcml-item{text-align:left;padding:6px 8px;border:0;border-radius:6px;background:rgba(0,0,0,0);color:inherit;cursor:pointer}.uwtcml-item:hover{background:rgba(128,128,128,.2)}.uwtcml-item.uwtcml-active{background:rgba(32,184,227,.25);font-weight:bold}.uwtcml-detail{flex:1 1 auto;min-width:0;overflow-y:auto}.uwtcml-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}.uwtcml-head h3{font-size:1.15rem;font-weight:bold;margin:0}.uwtcml-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:bold;color:#fff;white-space:nowrap}.uwtcml-tag--accepted{background:#08ca00;color:#000}.uwtcml-tag--queue{background:#1e88e5}.uwtcml-tag--rejected{background:#e53935}.uwtcml-info{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px}.uwtcml-wayspot-details{flex:1 1 260px;min-width:220px;background-color:#e4e4e4;border-radius:10px;padding:10px}.uwtcml-modal.uwt-dark .uwtcml-wayspot-details{background-color:#444}.uwtcml-wd-image{width:100%;border-radius:10px;margin-bottom:6px;cursor:pointer}.uwtcml-wd-description{text-align:left;white-space:pre-wrap}.uwtcml-satmap{flex:1 1 320px;min-width:260px;min-height:300px;border-radius:10px;overflow:hidden}.uwtcml-edits-container{margin-bottom:20px}.uwtcml-edits-summary-header{font-weight:bold;margin-bottom:4px}.uwtcml-edit-summary-table{width:100%;border-collapse:collapse}.uwtcml-edit-summary-table td{padding:3px 6px;border:none;border-bottom:1px solid rgba(128,128,128,.3)}.uwtcml-edit-summary-table td:first-child{width:100px;white-space:nowrap}.uwtcml-edit-summary-table td:last-child{width:95px;text-align:right}.uwftsc-normal{color:#20b8e3}.uwftsc-low{color:#44ce1b}.uwftsc-mid{color:#bbdb44}.uwftsc-med{color:#f7e379}.uwftsc-high{color:#f2a134}.uwftsc-extreme{color:#e51f1f}.uwtnsh-dropdown{cursor:pointer}.uwtnsh-dropdown .uwtnsh-expanded{display:none}.uwtnsh-dropdown .uwtnsh-dd-left{float:left;margin-right:7px;display:block}.uwtnsh-dropdown .uwtnsh-dd-right{float:right}app-submissions app-details-pane app-submission-tag-set+span{display:none}.uwtnsh-verified::after{content:" ✓";color:green;font-family:initial}.dark .uwtnsh-verified::after{color:lime}.uwftpb-blocked-hidden{display:none}.uwftpb-header{font-weight:bold}.uwftpb-table{width:100%;border-collapse:collapse}.uwftpb-table td:first-child{width:100px;border:none}.uwftpb-table td:last-child{width:95px;text-align:right;border:none}#uwtvd-display{position:fixed;left:64px;bottom:26px;z-index:99990;padding:.1em .7em;border-radius:999px;background:rgba(17,24,39,.85);font-size:12px;line-height:1.3;box-shadow:0 2px 8px rgba(0,0,0,.35);pointer-events:none}#uwtvd-display span{white-space:nowrap;font-weight:bold;color:#20b8e3}.uwtvd-update-available #uwtvd-display{animation:blink-animation 2s steps(2, start) infinite}.uwtvd-update-available #uwtvd-display span{color:red}@keyframes blink-animation{to{visibility:hidden}}.uwtSTH-bg{position:fixed;top:0;left:0;height:100vh;width:100vw;background-color:rgba(0,0,0,.5);z-index:100000}.uwtSTH-popup{position:absolute;top:50%;left:50%;transform:translateX(-50%) translateY(-50%);width:calc(100vw - 50px);height:calc(100vh - 50px);overflow-x:hidden;overflow-y:scroll;background-color:#fff;padding:20px;max-width:900px}.dark .uwtSTH-popup{background-color:#333}.uwtSTH-popup h1{margin-bottom:20px;width:calc(70% - 70px);float:left}.uwtSTH-search{width:30%;padding:.7em;font-size:1.1em;background-color:#ddd;float:right;display:none}.dark .uwtSTH-search{background-color:#222}.uwtSTH-searchMatch{background-color:#ff0;color:#000;display:inline-block;box-shadow:0 0 4px rgba(0,0,0,.5);white-space:pre}.uwtSTH-close{z-index:2;font-size:2em;cursor:pointer;opacity:.5;float:right;margin-left:14px}.uwtSTH-close:hover{opacity:1}.uwtSTH-box{height:calc(100% - 60px);display:flex;background-color:#ddd;clear:both}.dark .uwtSTH-box{background-color:#222}.uwtSTH-box>div{height:100%}.uwtSTH-list{width:40%;background-color:#eee;overflow-y:scroll;border-right:3px solid #fff}.dark .uwtSTH-list{background-color:#2a2a2a;border-right:3px solid #333}.uwtSTH-chat{width:60%;overflow-y:scroll;padding-bottom:15px}.uwtSTH-listitem{padding:10px;border-bottom:3px solid #fff;cursor:pointer;white-space:nowrap}.uwtSTH-listitem p{overflow:hidden;text-overflow:ellipsis}.dark .uwtSTH-listitem{border-bottom:3px solid #333}.uwtSTH-selected{background-color:#ddd;cursor:default}.dark .uwtSTH-selected{background-color:#222}.uwtSTH-message{padding:15px;clear:both}.uwtSTH-chatBubble{border-radius:8px;max-width:270px;padding:10px}.uwtSTH-chatBubble a{text-decoration:underline}.uwtSTH-msgState-sent .uwtSTH-chatBubble a{color:#fff}.uwtSTH-msgState-received .uwtSTH-chatBubble a{color:#000}.uwtSTH-msgState-sent .uwtSTH-chatBubble{background-color:#d85813;color:#fff;float:right}.uwtSTH-msgState-received .uwtSTH-chatBubble{background-color:#fff;color:#000;float:left}.uwtSTH-message>p{font-size:.8em;opacity:.8;margin:3px}.uwtSTH-msgState-received>p{text-align:left}.uwtSTH-msgState-sent>p{text-align:right}.uwtSTH-mt-option{background-color:#eee;padding:5px;margin-top:5px;border:1px solid #ccc}`);
+    elem.innerHTML = (`.uwftcore-checkbox{display:grid;grid-template-columns:1em auto;gap:.5em;line-height:1.1;margin-bottom:.5em;cursor:pointer}.uwftcore-checkbox input[type=checkbox]{appearance:none;font:inherit;color:currentColor;width:1.15em;height:1.15em;border:.15em solid currentColor;border-radius:.15em;display:grid;place-content:center}.uwftcore-checkbox input[type=checkbox]::before{content:"";width:.65em;height:.65em;transform:scale(0);transition:120ms transform ease-in-out;box-shadow:inset 1em 1em #ff6d38}.uwftcore-checkbox input[type=checkbox]:checked::before{transform:scale(1)}.uwftcore-checkbox input[type=checkbox]:disabled::before{box-shadow:inset 1em 1em hsl(16,0%,61%)}.uwftcore-plugin{margin-bottom:1em}.uwftcore-plugin-title{font-weight:bold}.uwftcore-authors{font-size:.8em}.uwftcore-description{font-size:.8em;opacity:.5}.uwftcore-depends{font-size:.8em}.uwftcore-depend-line{font-size:.8em}.uwftcore-refresh-reminder{margin-bottom:1em}.uwftcore-help-available{cursor:context-menu;text-decoration:underline dotted #7f7f7f}.uwftcore-discord-link-box{font-weight:bold}.uwftcore-discord-link-box img{height:1em;display:inline-block;margin-right:5px;margin-top:-4px}.uwftcore-option-line{margin-bottom:1rem}.dark input.uwftcore-fix,.dark select.uwftcore-fix,.dark span.uwftcore-fix{background-color:#333}input.uwftcore-fix,select.uwftcore-fix,span.uwftcore-fix{padding:2px 5px}input.uwftcore-ui-large-input{padding:10px 10px;margin:10px 10px 10px 0;border-radius:.375rem;font-size:16px}.uwftcore-ui-button{background-color:#e5e5e5;border:none;color:#ff4713;padding:10px 10px;margin:10px 10px 10px 0;border-radius:.375rem;text-align:center;text-decoration:none;display:inline-block;font-size:16px;cursor:pointer}.uwftcore-ui-button:hover{background-color:hsl(0,1%,75%);transition:.2s}.dark .uwftcore-ui-button{background-color:hsl(0,1%,25%);color:#20b8e3}.dark .uwftcore-ui-button:hover{background-color:#707070;transition:.2s}.uwftcore-ui-button-active{background-color:hsl(0,1%,67%)}.dark .uwftcore-ui-button-active{background-color:hsl(0,1%,33%)}#uwftcore-notifications{position:absolute;bottom:1em;right:1em;width:30em;z-index:100}.uwftcore-notification{font-weight:bold;border-radius:1em;padding:1em;margin-top:1.5em;color:#fff}.uwftcore-notify-content-wrapper{display:flex;align-items:center}.uwftcore-notify-icon-wrapper{width:30px}.uwftcore-notify-icon-wrapper>img{width:20px;height:20px}.uwftcore-nbg-red{background-color:#c00}.uwftcore-nbg-red a{color:#fcc}.uwftcore-nbg-green{background-color:hsl(153,90%,36%)}.uwftcore-nbg-blue{background-color:hsl(227,74%,39%)}.uwftcore-nbg-purple{background-color:hsl(258,90%,66%)}.uwftcore-nbg-gold{background-color:hsl(43,74%,49%)}.uwftcore-nbg-gray{background-color:hsl(0,0%,50%)}.uwftcore-nbg-brown{background-color:hsl(30,38%,33%)}.uwftcore-nbg-dark-gray{background-color:#666}.uwftcore-sidebar-icon{width:24px}.uwftcore-fullscreen-overlay{position:fixed;top:0;left:0;height:100dvh;width:100dvw;background-color:rgba(0,0,0,.5);z-index:100000}.uwftcore-fullscreen-inner{position:absolute;top:50%;left:50%;transform:translateX(-50%) translateY(-50%);overflow-x:hidden;overflow-y:scroll;background-color:#fff;padding:20px;max-width:900px;max-height:500px}.uwftcore-modal-common{width:calc(100vw - 50px);height:calc(100vh - 50px)}.uwftcore-modal-common h3{font-weight:bold;margin:10px auto}.uwftcore-modal-common>p{margin:10px auto}.dark .uwftcore-fullscreen-inner{background-color:#333}.uwftcore-import-options{max-width:550px;height:initial}.uwftcore-import-method{background-color:#e5e5e5;border:none;padding:10px 10px;cursor:pointer;width:100%;background-size:30px;background-position:15px;background-repeat:no-repeat;margin-bottom:10px}.uwftcore-import-method .uwftcore-import-method-title{color:#ff4713;font-size:16px}.uwftcore-import-method .uwftcore-import-method-desc{font-size:12px}.dark .uwftcore-import-method{background-color:#404040}.dark .uwftcore-import-method .uwftcore-import-method-title{color:#20b8e3}#uwt-status-stack{position:fixed;left:16px;bottom:102px;z-index:99990;display:flex;flex-direction:column;align-items:flex-start;gap:6px}.uwt-pill{display:flex;align-items:center;gap:.5em;margin:0;padding:.25em .8em;border-radius:999px;background:rgba(17,24,39,.92);color:#f9fafb;box-shadow:0 2px 8px rgba(0,0,0,.4);font-size:14px;line-height:1.2;white-space:nowrap;user-select:none}.uwt-pill p{margin:0}.uwt-pill p:nth-child(2){font-size:18px;font-weight:bold;font-variant-numeric:tabular-nums}#uwt-menu-button{position:fixed;left:16px;bottom:16px;z-index:99990;width:40px;height:40px;border-radius:50%;border:1px solid rgba(128,128,128,.5);background:#111827;color:#f9fafb;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.35);padding:0;opacity:.75}#uwt-menu-button:hover,#uwt-menu-button.uwt-open{opacity:1}#uwt-menu{position:fixed;left:16px;bottom:64px;z-index:99995;min-width:240px;max-height:calc(100vh - 90px);overflow-y:auto;padding:6px;border-radius:10px;border:1px solid rgba(128,128,128,.4);background:#111827;color:#f9fafb;box-shadow:0 4px 16px rgba(0,0,0,.45)}#uwt-menu[hidden]{display:none}.uwt-menu-item{display:flex;align-items:center;gap:10px;width:100%;padding:7px 10px;border:0;border-radius:6px;background:rgba(0,0,0,0);color:inherit;font-size:14px;text-align:left;cursor:pointer}.uwt-menu-item:hover{background:hsla(0,0%,100%,.12)}.uwt-menu-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 20px;width:20px;height:20px}.uwt-menu-icon img{width:20px;height:20px;filter:brightness(0) invert(1)}.uwt-menu-sep{height:1px;margin:4px 6px;background:rgba(128,128,128,.4)}.uwt-report-modal{position:relative;background:#fff !important;color:#111827 !important;font-size:15px;width:min(900px,100vw - 50px);max-height:none !important}.uwt-report-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.6rem}.uwt-report-modal .uwt-report-close{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwt-report-modal .uwt-report-text{width:100%;height:min(480px,100vh - 260px);margin:.6rem 0;padding:6px;border:1px solid #9ca3af;border-radius:4px;background:#f9fafb;color:#111827;font-family:monospace;font-size:12px;white-space:pre}.uwtkr2-eds-highlighted{border-width:1px;border-color:#df471c}.dark .uwtkr2-eds-highlighted{border-color:#20b8e3}.uwtkr2-eds-btn-key::before,.uwtkr2-key-label,.uwtkr2-key-span{color:#ff6d38;font-family:monospace;text-transform:none;display:inline-block}.uwtkr2-key-span-wildcard{color:#20b8e3}.uwtkr2-eds-btn-key-no-highlight::before{color:#000}.dark .uwtkr2-eds-btn-key-no-highlight::before{color:#fff}.uwtkr2-eds-btn-key-pad::before,.uwtkr2-key-label{margin-right:5px}.uwtkr2-eds-btn-key.is-selected::before,.uwtkr2-eds-btn-key.wf-button--primary::before{color:#000}.uwtkr2-photo-card-label{font-size:1.9em;display:inline-block;padding:0 .5em}.uwtkr2-eds-key-bracket-A::before{content:"A"}.uwtkr2-eds-key-bracket-B::before{content:"B"}.uwtkr2-eds-key-bracket-C::before{content:"C"}.uwtkr2-eds-key-bracket-D::before{content:"D"}.uwtkr2-eds-key-bracket-E::before{content:"E"}.uwtkr2-eds-key-bracket-F::before{content:"F"}.uwtkr2-eds-key-bracket-G::before{content:"G"}.uwtkr2-eds-key-bracket-H::before{content:"H"}.uwtkr2-eds-key-bracket-I::before{content:"I"}.uwtkr2-eds-key-bracket-J::before{content:"J"}.uwtkr2-eds-key-bracket-K::before{content:"K"}.uwtkr2-eds-key-bracket-L::before{content:"L"}.uwtkr2-eds-key-bracket-M::before{content:"M"}.uwtkr2-eds-key-bracket-N::before{content:"N"}.uwtkr2-eds-key-bracket-O::before{content:"O"}.uwtkr2-eds-key-bracket-P::before{content:"P"}.uwtkr2-eds-key-bracket-Q::before{content:"Q"}.uwtkr2-eds-key-bracket-R::before{content:"R"}.uwtkr2-eds-key-bracket-S::before{content:"S"}.uwtkr2-eds-key-bracket-T::before{content:"T"}.uwtkr2-eds-key-bracket-U::before{content:"U"}.uwtkr2-eds-key-bracket-V::before{content:"V"}.uwtkr2-eds-key-bracket-W::before{content:"W"}.uwtkr2-eds-key-bracket-X::before{content:"X"}.uwtkr2-eds-key-bracket-Y::before{content:"Y"}.uwtkr2-eds-key-bracket-Z::before{content:"Z"}.uwtkr2-eds-key-bracket-0::before{content:"0"}.uwtkr2-eds-key-bracket-1::before{content:"1"}.uwtkr2-eds-key-bracket-2::before{content:"2"}.uwtkr2-eds-key-bracket-3::before{content:"3"}.uwtkr2-eds-key-bracket-4::before{content:"4"}.uwtkr2-eds-key-bracket-5::before{content:"5"}.uwtkr2-eds-key-bracket-6::before{content:"6"}.uwtkr2-eds-key-bracket-7::before{content:"7"}.uwtkr2-eds-key-bracket-8::before{content:"8"}.uwtkr2-eds-key-bracket-9::before{content:"9"}.uwtkr2-eds-key-bracket-Esc::before{content:"Esc"}.uwtkr2-eds-key-bracket-Tab::before{content:"Tab"}.uwtkr2-eds-key-bracket-Enter::before{content:"Enter"}.uwtkr2-dupe-key-box{width:0;z-index:10}.uwtkr2-dupe-key-box>div{width:1.7em;margin:5px;text-align:center;font-weight:bold;font-size:1.3em;border:1px solid #000;pointer-events:none;background:rgba(0,0,0,.5);color:#ff6d38}.uwtkr2-card app-review-text-diff{display:inline-block}.uwftmr-div{color:#333;margin-left:2em;padding-top:.3em;text-align:center;display:block}.dark .uwftmr-div{color:#ddd}.uwftmr-counter{font-size:20px;color:#20b8e3}.uwftmr-sbb{color:#20b8e3}.uwtns-modal{position:relative;background:#fff !important;color:#111827 !important;font-size:15px;width:min(760px,100vw - 50px)}.uwtns-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtns-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.8rem}.uwtns-modal .uwtns-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtns-modal .uwtns-x:hover{opacity:1}#uwftns-export{display:flex;gap:.5rem;margin-top:1rem}.uwtns-stats-table th,.uwtns-stats-table td{border:1px solid rgba(128,128,128,.6);padding:1pt 5pt}.uwtns-stats-table{width:100%}.uwtns-stats-table th:first-child,.uwtns-stats-table td:first-child{text-align:left}.uwtns-stats-table th:not(:first-child),.uwtns-stats-table td:not(:first-child){text-align:center}.uwtnm-text{font-size:18px}.uwtnm-toggle{display:none}.uwtnm-wrap-collapsible{margin-bottom:1.2rem}#uwtnm-collapsed-map{display:none}.uwtnm-lbl-toggle{display:block;font-weight:bold;font-family:monospace;font-size:1.2rem;text-transform:uppercase;text-align:center;padding:1rem;color:#fff;background:#df471c;cursor:pointer;border-radius:7px;transition:all .25s ease-out}.uwtnm-lbl-toggle:hover{color:#d3d3d3}.uwtnm-lbl-toggle::before{content:" ";display:inline-block;border-top:5px solid rgba(0,0,0,0);border-bottom:5px solid rgba(0,0,0,0);border-left:5px solid currentColor;vertical-align:middle;margin-right:.7rem;transform:translateY(-2px);transition:transform .2s ease-out}.uwtnm-toggle:checked+.uwtnm-lbl-toggle::before{transform:rotate(90deg) translateX(-3px)}.uwtnm-collapsible-content{max-height:0px;overflow:hidden;transition:max-height .25s ease-in-out}.uwtnm-toggle:checked+.uwtnm-lbl-toggle+.uwtnm-collapsible-content{max-height:9999999pt}.uwtnm-toggle:checked+.uwtnm-lbl-toggle{border-bottom-right-radius:0;border-bottom-left-radius:0}.uwtnm-map{height:400px}.uwtoi-label{font-weight:bold}.uwtoi-container{margin-bottom:10px}.uwtoi-dupe-map{padding:0 1rem;margin-top:-1rem}.uwtoi-linkspan::before{content:" · "}.uwtoi-linkspan:nth-child(2)::before{content:""}.uwtoi-experimental{color:#ff8c00;position:relative;display:inline-block}.uwtoi-tttitle{color:#ff8c00;font-weight:bold}.uwtoi-experimental .uwtoi-tooltip{visibility:hidden;width:320px;background-color:rgba(0,0,0,.8);color:#fff;text-align:center;padding:12px;position:absolute;z-index:1;bottom:150%;left:50%;margin-left:-160px;border-radius:10px;pointer-events:none}.uwtoi-experimental .uwtoi-tooltip::after{content:"";position:absolute;top:100%;left:50%;z-index:1;margin-left:-10px;border-width:10px;border-style:solid;border-color:rgba(0,0,0,.8) rgba(0,0,0,0) rgba(0,0,0,0) rgba(0,0,0,0)}.uwtoi-experimental:hover .uwtoi-tooltip{visibility:visible}.uwtoi-address{font-size:1.1em;font-weight:bold;color:#000}.dark .uwtoi-address{color:#fff}.uwtes-modal{position:relative;background:#fff !important;color:#111827 !important;font-size:15px;width:min(560px,100vw - 50px)}.uwtes-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtes-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.8rem}.uwtes-modal .uwtes-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtes-modal .uwtes-x:hover{opacity:1}.uwtes-table{width:100%;border-collapse:collapse}.uwtes-table td{padding:6px 4px;border-bottom:1px solid rgba(128,128,128,.3)}.uwftes-text{font-size:16px}.uwftes-count{font-size:16px;text-align:right;font-variant-numeric:tabular-nums}.uwtes-extended td{font-weight:bold}.uwtes-copy{margin-top:16px}.uwftat-outer p:nth-child(2){color:#20b8e3}.uwtrct-outer{position:fixed;left:16px;bottom:64px;z-index:99990;display:flex;align-items:center;gap:.5em;margin:0;padding:.25em .8em;border-radius:999px;background:rgba(17,24,39,.92);color:#f9fafb;box-shadow:0 2px 8px rgba(0,0,0,.4);font-size:14px;line-height:1.2;cursor:pointer;user-select:none}.uwtrct-outer p{margin:0}.uwtrct-outer p:nth-child(2){font-size:18px;font-weight:bold;color:#20b8e3;font-variant-numeric:tabular-nums}.uwtrh-modal{position:relative;display:flex;flex-direction:column;background:#fff !important;color:#111827 !important;font-size:15px;width:min(1100px,100vw - 50px);height:min(760px,100vh - 50px);max-width:none !important;max-height:none !important}.uwtrh-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtrh-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.6rem}.uwtrh-modal .uwtrh-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtrh-modal .uwtrh-x:hover{opacity:1}.uwtrh-modal .uwtrh-count{margin:.4rem 0}.uwtrh-modal .uwtrh-table{flex:1 1 auto;height:auto;min-height:320px}.uwtrh-idb{display:flex;align-items:center;flex-wrap:wrap;gap:.25rem}.uwtrh-idb button{background-color:#e5e5e5;border:none;color:#ff4713;padding:2px 6px;margin:3px;text-align:center;text-decoration:none;display:inline-block;font-size:14px}.dark .uwtrh-idb button{background-color:#404040;color:#20b8e3}.uwtrh-table{display:none;height:500px}.uwtemli-modal{text-align:center}.uwtemli-modal h2{margin-bottom:10px}.uwtegas-options-modal{max-width:700px;height:initial}.uwtegas-table{width:100%}.uwtegas-table td{border:none}.uwtegas-table input{background-color:#ddd;width:100%;padding:5px}.dark .uwtegas-table input{background-color:#222}.uwtegas-cancel-btn{color:#000}.dark .uwtegas-cancel-btn{color:red}.uwtwsr-root-new{margin-top:-1rem;grid-gap:1rem !important}.uwtwsr-root-new app-photo-b img{margin:auto}.uwtwsr-root-new .wf-review-card{height:initial;max-height:380px}.uwtwsr-root-new #check-duplicates-card{max-height:initial}.uwtwsr-root-new .wf-image-modal img{max-height:calc((100dvh - 440px)/2)}@media(max-width: 2000px){.uwtwsr-root-new .action-buttons-row{flex-direction:column !important;justify-content:initial !important}}.uwtwsr-thumbs-row{display:flex;flex-direction:row}.uwtwsr-root-new .dont-know-button{margin-left:0 !important;padding:.375rem !important}.uwtwsr-root-new .question-title .question-subtitle-tooltip{margin-left:.5rem;line-height:1.6rem}.uwtwsr-root-new app-question-card .main-section-container{justify-content:space-between}.uwtcml-modal{position:relative;display:flex;flex-direction:column;background:#fff !important;color:#111827 !important;font-size:15px;width:min(1100px,100vw - 50px);height:min(760px,100vh - 50px);max-width:none !important;max-height:none !important}.uwtcml-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtcml-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.6rem}.uwtcml-modal .uwtcml-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtcml-modal .uwtcml-x:hover{opacity:1}.uwtcml-body{display:flex;flex:1 1 auto;min-height:0;gap:16px}.uwtcml-side{display:flex;flex-direction:column;flex:0 0 280px;min-height:0;gap:8px}.uwtcml-side input{border:1px solid #9ca3af;border-radius:4px;padding:4px 8px;background:#fff;color:#111827}.uwtcml-list{overflow-y:auto;display:flex;flex-direction:column;gap:2px}.uwtcml-item{text-align:left;padding:6px 8px;border:0;border-radius:6px;background:rgba(0,0,0,0);color:inherit;cursor:pointer}.uwtcml-item:hover{background:rgba(128,128,128,.2)}.uwtcml-item.uwtcml-active{background:rgba(32,184,227,.25);font-weight:bold}.uwtcml-detail{flex:1 1 auto;min-width:0;overflow-y:auto}.uwtcml-head{display:flex;align-items:center;gap:10px;margin-bottom:8px}.uwtcml-head h3{font-size:1.15rem;font-weight:bold;margin:0}.uwtcml-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:bold;color:#fff;white-space:nowrap}.uwtcml-tag--accepted{background:#08ca00;color:#000}.uwtcml-tag--queue{background:#1e88e5}.uwtcml-tag--rejected{background:#e53935}.uwtcml-info{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:16px}.uwtcml-wayspot-details{flex:1 1 260px;min-width:220px;background-color:#e4e4e4;border-radius:10px;padding:10px}.uwtcml-modal.uwt-dark .uwtcml-wayspot-details{background-color:#444}.uwtcml-wd-image{width:100%;border-radius:10px;margin-bottom:6px;cursor:pointer}.uwtcml-wd-description{text-align:left;white-space:pre-wrap}.uwtcml-satmap{flex:1 1 320px;min-width:260px;min-height:300px;border-radius:10px;overflow:hidden}.uwtcml-edits-container{margin-bottom:20px}.uwtcml-edits-summary-header{font-weight:bold;margin-bottom:4px}.uwtcml-edit-summary-table{width:100%;border-collapse:collapse}.uwtcml-edit-summary-table td{padding:3px 6px;border:none;border-bottom:1px solid rgba(128,128,128,.3)}.uwtcml-edit-summary-table td:first-child{width:100px;white-space:nowrap}.uwtcml-edit-summary-table td:last-child{width:95px;text-align:right}.uwtnsh-modal{position:relative;display:flex;flex-direction:column;background:#fff !important;color:#111827 !important;font-size:15px;width:min(1000px,100vw - 50px);height:min(720px,100vh - 50px);max-width:none !important;max-height:none !important}.uwtnsh-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtnsh-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.6rem}.uwtnsh-modal .uwtnsh-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtnsh-modal .uwtnsh-x:hover{opacity:1}.uwtnsh-body{display:flex;flex:1 1 auto;min-height:0;gap:16px}.uwtnsh-side{display:flex;flex-direction:column;flex:0 0 320px;min-height:0;gap:8px}.uwtnsh-side input{border:1px solid #9ca3af;border-radius:4px;padding:4px 8px;background:#fff;color:#111827}.uwtnsh-list{overflow-y:auto;display:flex;flex-direction:column;gap:2px}.uwtnsh-item{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:6px 8px;border:0;border-radius:6px;background:rgba(0,0,0,0);color:inherit;cursor:pointer}.uwtnsh-item small{opacity:.7}.uwtnsh-item:hover{background:rgba(128,128,128,.2)}.uwtnsh-item.uwtnsh-active{background:rgba(32,184,227,.25)}.uwtnsh-item.uwtnsh-active span{font-weight:bold}.uwtnsh-detail{flex:1 1 auto;min-width:0;overflow-y:auto}.uwtnsh-detail h3{font-size:1.15rem;font-weight:bold;margin:0 0 4px 0}.uwtnsh-detail .uwtnsh-summary{opacity:.8;margin-bottom:10px}.uwtnsh-detail p{margin:2px 0}.uwtnsh-detail a{cursor:pointer;text-decoration:underline}.uwtnsh-verified::after{content:" ✓";color:green;font-family:initial}.dark .uwtnsh-verified::after,.uwt-dark .uwtnsh-verified::after{color:lime}.uwftbdiff-differs{border-bottom:2px solid #ff6d38;background-color:rgba(255,109,56,.3)}.uwtdme-hidden{display:none !important}.uwtnc-modal{position:relative;display:flex;flex-direction:column;background:#fff !important;color:#111827 !important;font-size:15px;width:min(1000px,100vw - 50px);height:min(720px,100vh - 50px);max-width:none !important;max-height:none !important}.uwtnc-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtnc-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.6rem}.uwtnc-modal .uwtnc-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtnc-modal .uwtnc-x:hover{opacity:1}.uwtnc-body{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;gap:8px}.uwtnc-help{opacity:.8}.uwtnc-body input{border:1px solid #9ca3af;border-radius:4px;padding:4px 8px;background:#fff;color:#111827}.uwtnc-scroll{flex:1 1 auto;min-height:0;overflow:auto}.uwtnc-table{width:100%;border-collapse:collapse}.uwtnc-table th{position:sticky;top:0;text-align:left;background:inherit;border-bottom:2px solid rgba(128,128,128,.6);padding:4px 6px}.uwtnc-modal .uwtnc-table th{background:#fff}.uwtnc-modal.uwt-dark .uwtnc-table th{background:#1f2937}.uwtnc-table td{padding:4px 6px;border-bottom:1px solid rgba(128,128,128,.3)}.uwtnc-coordinates{cursor:pointer;font-family:monospace;white-space:nowrap}.uwtnc-coordinates:hover{text-decoration:underline}.uwtSTH-bg{position:fixed;top:0;left:0;height:100vh;width:100vw;background-color:rgba(0,0,0,.5);z-index:100000}.uwtSTH-popup{position:absolute;top:50%;left:50%;transform:translateX(-50%) translateY(-50%);width:calc(100vw - 50px);height:calc(100vh - 50px);overflow-x:hidden;overflow-y:scroll;background-color:#fff;padding:20px;max-width:900px}.dark .uwtSTH-popup{background-color:#333}.uwtSTH-popup h1{margin-bottom:20px;width:calc(70% - 70px);float:left}.uwtSTH-search{width:30%;padding:.7em;font-size:1.1em;background-color:#ddd;float:right;display:none}.dark .uwtSTH-search{background-color:#222}.uwtSTH-searchMatch{background-color:#ff0;color:#000;display:inline-block;box-shadow:0 0 4px rgba(0,0,0,.5);white-space:pre}.uwtSTH-close{z-index:2;font-size:2em;cursor:pointer;opacity:.5;float:right;margin-left:14px}.uwtSTH-close:hover{opacity:1}.uwtSTH-box{height:calc(100% - 60px);display:flex;background-color:#ddd;clear:both}.dark .uwtSTH-box{background-color:#222}.uwtSTH-box>div{height:100%}.uwtSTH-list{width:40%;background-color:#eee;overflow-y:scroll;border-right:3px solid #fff}.dark .uwtSTH-list{background-color:#2a2a2a;border-right:3px solid #333}.uwtSTH-chat{width:60%;overflow-y:scroll;padding-bottom:15px}.uwtSTH-listitem{padding:10px;border-bottom:3px solid #fff;cursor:pointer;white-space:nowrap}.uwtSTH-listitem p{overflow:hidden;text-overflow:ellipsis}.dark .uwtSTH-listitem{border-bottom:3px solid #333}.uwtSTH-selected{background-color:#ddd;cursor:default}.dark .uwtSTH-selected{background-color:#222}.uwtSTH-message{padding:15px;clear:both}.uwtSTH-chatBubble{border-radius:8px;max-width:270px;padding:10px}.uwtSTH-chatBubble a{text-decoration:underline}.uwtSTH-msgState-sent .uwtSTH-chatBubble a{color:#fff}.uwtSTH-msgState-received .uwtSTH-chatBubble a{color:#000}.uwtSTH-msgState-sent .uwtSTH-chatBubble{background-color:#d85813;color:#fff;float:right}.uwtSTH-msgState-received .uwtSTH-chatBubble{background-color:#fff;color:#000;float:left}.uwtSTH-message>p{font-size:.8em;opacity:.8;margin:3px}.uwtSTH-msgState-received>p{text-align:left}.uwtSTH-msgState-sent>p{text-align:right}.uwtSTH-mt-option{background-color:#eee;padding:5px;margin-top:5px;border:1px solid #ccc}.uwftpb-header{font-weight:bold;margin-top:12px;margin-bottom:4px}.uwftpb-table{width:100%;border-collapse:collapse}.uwftpb-table td{padding:3px 6px;border:none;border-bottom:1px solid rgba(128,128,128,.3)}.uwftpb-table td:first-child{width:100px;white-space:nowrap}.uwftpb-table td:last-child{width:95px;text-align:right}.uwtpb-modal{position:relative;display:flex;flex-direction:column;background:#fff !important;color:#111827 !important;font-size:15px;width:min(1000px,100vw - 50px);height:min(720px,100vh - 50px);max-width:none !important;max-height:none !important}.uwtpb-modal.uwt-dark{background:#1f2937 !important;color:#f9fafb !important}.uwtpb-modal h2{font-size:1.4rem;font-weight:bold;margin-bottom:.6rem}.uwtpb-modal .uwtpb-x{position:absolute;top:8px;right:14px;font-size:26px;cursor:pointer;opacity:.6;background:none;border:0;color:inherit}.uwtpb-modal .uwtpb-x:hover{opacity:1}.uwtpb-body{display:flex;flex:1 1 auto;min-height:0;gap:16px}.uwtpb-side{display:flex;flex-direction:column;flex:0 0 300px;min-height:0;gap:8px}.uwtpb-all{font-size:13px;cursor:pointer}.uwtpb-list{overflow-y:auto;display:flex;flex-direction:column;gap:2px}.uwtpb-item{display:flex;flex-direction:column;align-items:flex-start;text-align:left;padding:6px 8px;border:0;border-radius:6px;background:rgba(0,0,0,0);color:inherit;cursor:pointer}.uwtpb-item small{opacity:.7}.uwtpb-item:hover{background:rgba(128,128,128,.2)}.uwtpb-item.uwtpb-active{background:rgba(32,184,227,.25)}.uwtpb-item.uwtpb-active span{font-weight:bold}.uwtpb-detail{flex:1 1 auto;min-width:0;overflow-y:auto}.uwtpb-head{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px}.uwtpb-head h3{font-size:1.15rem;font-weight:bold;margin:0}.uwtpb-tag{display:inline-block;padding:1px 8px;border-radius:999px;font-size:12px;font-weight:bold;color:#fff;white-space:nowrap}.uwtpb-tag--queue{background:#1e88e5}.uwtpb-tag--blocked{background:#e53935}.uwftsc-normal{color:#20b8e3}.uwftsc-low{color:#44ce1b}.uwftsc-mid{color:#bbdb44}.uwftsc-med{color:#f7e379}.uwftsc-high{color:#f2a134}.uwftsc-extreme{color:#e51f1f}#uwtvd-display{position:fixed;left:64px;bottom:26px;z-index:99990;padding:.1em .7em;border-radius:999px;background:rgba(17,24,39,.85);font-size:12px;line-height:1.3;box-shadow:0 2px 8px rgba(0,0,0,.35);pointer-events:none}#uwtvd-display span{white-space:nowrap;font-weight:bold;color:#20b8e3}.uwtvd-update-available #uwtvd-display{animation:blink-animation 2s steps(2, start) infinite}.uwtvd-update-available #uwtvd-display span{color:red}@keyframes blink-animation{to{visibility:hidden}}`);
     document.querySelector("head")?.appendChild(elem);
     return elem;
   };

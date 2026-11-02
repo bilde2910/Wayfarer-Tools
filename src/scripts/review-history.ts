@@ -17,7 +17,7 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register, UnixTimestampDateOnlyEditor } from "../core";
-import { untilTruthy, downloadAsFile, filterObject, haversine, isDarkMode, makeChildNode, readFile } from "../utils";
+import { downloadAsFile, filterObject, haversine, isDarkMode, makeChildNode, readFile } from "../utils";
 import { AnyReview, AnySubmittedReview, EditReview, NewReview, PhotoReview, SubmittedEditReview, SubmittedNewReview, SubmittedPhotoReview } from "../types";
 
 import agGrid from "ag-grid-community";
@@ -172,17 +172,6 @@ export default () => {
         makeChildNode(container, "h2", "Review history");
         addRHButtons(makeChildNode(container, "div"));
         await renderReviewHistory(container);
-      };
-
-      const addHistoryButton = async () => {
-        const body = await untilTruthy(() => document.body);
-        if (document.getElementById("uwtrh-button")) return;
-        const button = makeChildNode(body, "button") as HTMLButtonElement;
-        button.id = "uwtrh-button";
-        button.type = "button";
-        button.title = "Review history";
-        button.innerHTML = "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><polyline points=\"12 7 12 12 15 14\"/></svg>";
-        button.addEventListener("click", () => { void openHistoryWindow(); });
       };
 
       const addRHButtons = (outer: HTMLElement) => {
@@ -491,7 +480,12 @@ export default () => {
 
       toolbox.interceptOpenJson("GET", "/api/v1/vault/review", handleIncomingReview);
       toolbox.interceptSendJson("/api/v1/vault/review", handleSubmittedReview);
-      void addHistoryButton();
+      // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+      toolbox.addMenuItem("review-history", {
+        label: "Review history",
+        icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"9\"/><polyline points=\"12 7 12 12 15 14\"/></svg>",
+        callback: () => { void openHistoryWindow(); },
+      });
 
       return {
         async getAllReviews() {

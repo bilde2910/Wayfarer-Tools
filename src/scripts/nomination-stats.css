@@ -1,28 +1,3 @@
-/* redesign: button (next to the Nomination map button) and window for the stats */
-#uwtns-button {
-  position: fixed;
-  left: 64px;
-  bottom: 64px;
-  z-index: 99990;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(128, 128, 128, 0.5);
-  background: #111827;
-  color: #f9fafb;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-  padding: 0;
-  opacity: 0.75;
-}
-
-#uwtns-button:hover {
-  opacity: 1;
-}
-
 .uwtns-modal {
   position: relative;
   background: #fff !important;

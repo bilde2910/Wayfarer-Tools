@@ -28,6 +28,10 @@ interface DynamicMap {
   pano: google.maps.StreetViewPanorama,
 }
 
+interface DynamicMapContainer extends HTMLElement {
+  __uwtTools_static?: HTMLElement,
+}
+
 interface EnrichedStaticMapElement extends HTMLElement {
   __uwtTools_DME?: DynamicMap,
   __uwtTools_DME_url?: string,
@@ -93,7 +97,19 @@ export default () => {
         const url = getStaticMapUrl(staticMap);
         if (typeof url !== "undefined") {
           // the page is scanned repeatedly; skip maps that are already showing this exact static map
-          if (staticMap.__uwtTools_DME_url === url.href) return;
+          if (staticMap.__uwtTools_DME_url === url.href) {
+            if (typeof staticMap.__uwtTools_DME !== "undefined") {
+              if (staticMap.__uwtTools_DME.container.isConnected) {
+                // the page may have reset the element's classes, which would show the static map again
+                staticMap.classList.add("uwtdme-hidden");
+                return;
+              }
+              // the page removed our interactive map (it re-rendered the parent); build it again
+              delete staticMap.__uwtTools_DME;
+            } else {
+              return;
+            }
+          }
           staticMap.__uwtTools_DME_url = url.href;
           const mapConfig = parseStaticMapUrl(url);
           if (typeof mapConfig === "undefined") return;
@@ -105,8 +121,9 @@ export default () => {
 
           staticMap.classList.add("uwtdme-hidden");
           if (typeof staticMap.__uwtTools_DME === "undefined") {
-            const node = document.createElement("div");
+            const node = document.createElement("div") as DynamicMapContainer;
             node.classList.add("uwtdme-container");
+            node.__uwtTools_static = staticMap;
             staticMap.parentElement!.insertBefore(node, staticMap);
             staticMap.__uwtTools_DME = createDynamicMap(node, mapConfig, chosenMapType);
           } else {
@@ -126,6 +143,10 @@ export default () => {
       // the page's own Google Maps API (not the userscript sandbox's view of the window) must be loaded
       untilTruthy(() => uwtGoogle()?.maps).then(() => {
         const scan = () => {
+          // remove interactive maps whose static map is gone (the page replaced it, for example for the next review)
+          for (const c of document.querySelectorAll<DynamicMapContainer>(".uwtdme-container")) {
+            if (!c.__uwtTools_static?.isConnected) c.remove();
+          }
           for (const map of document.querySelectorAll<EnrichedStaticMapElement>(STATIC_MAP_SELECTOR)) {
             try {
               replaceMap(map);

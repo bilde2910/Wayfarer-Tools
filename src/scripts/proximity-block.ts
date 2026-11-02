@@ -18,12 +18,23 @@
 
 import { register } from "../core";
 import { makeChildNode } from "../utils";
-import { AnyContribution, ContributionStatus, ContributionType, Nomination, SubmissionsResult } from "../types";
-import { AppSubmissionsListItemElement } from "../unsafe";
+import { ContributionStatus, ContributionType, Nomination, SubmissionsResult } from "../types";
 
 import "./proximity-block.css";
 
 import { S2 } from "s2-geometry";
+
+const STATUS_LABELS: Record<string, string> = {
+  [ContributionStatus.NOMINATED]: "In Queue",
+  [ContributionStatus.VOTING]: "In Voting",
+  [ContributionStatus.HELD]: "On Hold",
+  [ContributionStatus.ACCEPTED]: "Accepted",
+  [ContributionStatus.REJECTED]: "Rejected",
+  [ContributionStatus.DUPLICATE]: "Duplicate",
+  [ContributionStatus.WITHDRAWN]: "Withdrawn",
+  [ContributionStatus.APPEALED]: "Appealed",
+  [ContributionStatus.NIANTIC_REVIEW]: "Niantic Review",
+};
 
 export default () => {
   register()({
@@ -33,17 +44,16 @@ export default () => {
     description: "Find other nearby nominations that are blocking, or would be blocked by, each nomination",
     defaultConfig: {},
     sessionData: {},
-    initialize: (toolbox, _logger, _config) => {
+    initialize: (toolbox, logger, _config) => {
+      // ---- redesign: the Contribution Management page (app-submissions-list-item tags, the details pane and
+      // Angular's internal data) this addon used to add labels and tables to is gone. The same information is
+      // now shown in a window opened from the Wayfarer Tools menu.
       let nominations: Nomination[] = [];
+      let loaded = false;
 
-      const handleNominations = async (result: SubmissionsResult) => {
+      const handleNominations = (result: SubmissionsResult) => {
         nominations = result.submissions.filter(s => s.type === ContributionType.NOMINATION);
-      };
-
-      const formatItem = (item: AppSubmissionsListItemElement) => {
-        const data = item.__ngContext__[22];
-        updateRejectionLabels(item, data);
-        item.addEventListener("click", () => interceptDetailsPane(data));
+        loaded = true;
       };
 
       const getConflictingS2L17Cells = (lat: number, lng: number) => {
@@ -77,36 +87,22 @@ export default () => {
         return blockingNoms;
       };
 
-      const updateRejectionLabels = (item: AppSubmissionsListItemElement, nom: AnyContribution) => {
-        // Remove uwftpb-blocked class if already present
-        const blockedTags = item.querySelectorAll(".uwftpb-blocked-tag");
-        for (let i = blockedTags.length - 1; i >= 0; i--) blockedTags[i].remove();
-        const hiddenTags = item.querySelectorAll(".uwftpb-blocked-hidden");
-        for (let i = hiddenTags.length - 1; i >= 0; i--) hiddenTags[i].classList.remove("uwftpb-blocked-hidden");
+      const isActive = (n: Nomination) => !n.upgraded && (
+        n.status === ContributionStatus.NOMINATED ||
+        n.status === ContributionStatus.VOTING ||
+        n.status === ContributionStatus.HELD
+      );
 
-        if (nom.type !== ContributionType.NOMINATION) return;
-        if (nom.status !== ContributionStatus.NOMINATED) return;
-        if (nom.upgraded) return;
+      // If the current Wayspot data is blocked by another in-voting nomination, it is "proximity blocked".
+      const isProximityBlocked = (nom: Nomination, blocking: Nomination[]) =>
+        nom.status === ContributionStatus.NOMINATED && !nom.upgraded &&
+        blocking.some(n => n.status === ContributionStatus.VOTING);
 
-        // If the current Wayspot data is blocked by another in-voting nomination, mark it as "proximity blocked".
-        const blockers = proximityBlockingFor(nom).filter(n => n.status === ContributionStatus.VOTING);
-        if (blockers.length > 0) {
-          const nominationTagSet = item.querySelector("app-submission-tag-set");
-          if (nominationTagSet) {
-            // Hide existing tag
-            const existingTags = nominationTagSet.querySelectorAll("app-submission-tag");
-            if (existingTags.length === 1) {
-              existingTags[0].classList.add("uwftpb-blocked-hidden");
-            }
-            // Create new tag
-            const newTag = makeChildNode(nominationTagSet, "app-submission-tag");
-            newTag.classList.add("mr-1", "uwftpb-blocked-tag");
-            const newTagContent = makeChildNode(newTag, "div");
-            newTagContent.classList.add("submission-tag", "ng-star-inserted");
-            const newSpan = makeChildNode(newTagContent, "span", "Proximity Blocked");
-            newSpan.classList.add("submission-tag--queue");
-          }
-        }
+      const makeTag = (label: string, style: "queue" | "blocked") => {
+        const span = document.createElement("span");
+        span.className = `uwtpb-tag uwtpb-tag--${style}`;
+        span.textContent = label;
+        return span;
       };
 
       const makeTable = (title: string, nominations: Nomination[]) => {
@@ -124,36 +120,19 @@ export default () => {
           const row = table.insertRow();
           makeChildNode(row, "td", nom.day);
           makeChildNode(row, "td", nom.title);
-          const cell3 = makeChildNode(row, "td");
-          cell3.appendChild(generateNominationTag(nom));
+          makeChildNode(makeChildNode(row, "td"), "span").replaceWith(makeTag(STATUS_LABELS[nom.status] ?? "Unknown", "queue"));
         }
 
         return container;
       };
 
-      const generateNominationTag = (data: Nomination) => {
-        const tagText = (() => {
-          switch (data.status) {
-            case ContributionStatus.NOMINATED: return "In Queue";
-            case ContributionStatus.VOTING: return "In Voting";
-            case ContributionStatus.HELD: return "On Hold";
-            default: return "Unknown";
-          }
-        })();
-        const asTag = document.createElement("app-submission-tag");
-        const subTag = makeChildNode(asTag, "div");
-        subTag.classList.add("submission-tag");
-        makeChildNode(subTag, "span", tagText).classList.add("submission-tag--queue");
-        return asTag;
-      };
-
-      const interceptDetailsPane = (data: AnyContribution) => {
-        const containers = document.querySelectorAll(".uwftpb-container");
-        for (let i = containers.length - 1; i >= 0; i--) containers[i].remove();
-        if (data.type !== ContributionType.NOMINATION) return;
-        const blocking = proximityBlockingFor(data);
-        if (blocking.length === 0) return;
-        const ref = document.querySelector("app-details-pane img");
+      const renderDetail = (detail: HTMLElement, data: Nomination, blocking: Nomination[]) => {
+        detail.innerHTML = "";
+        const head = makeChildNode(detail, "div");
+        head.className = "uwtpb-head";
+        makeChildNode(head, "h3", data.title || "(untitled)");
+        head.appendChild(makeTag(STATUS_LABELS[data.status] ?? data.status, "queue"));
+        if (isProximityBlocked(data, blocking)) head.appendChild(makeTag("Proximity Blocked", "blocked"));
 
         const blockedBy: Nomination[] = [];
         const willBlock: Nomination[] = [];
@@ -167,18 +146,107 @@ export default () => {
 
         if (blockedBy.length && data.status !== ContributionStatus.VOTING) {
           const header = `Currently proximity blocked by (${blockedBy.length})`;
-          ref!.parentElement!.insertBefore(makeTable(header, blockedBy), ref);
+          detail.appendChild(makeTable(header, blockedBy));
         }
         if (willBlock.length) {
           const header = data.status === ContributionStatus.VOTING
             ? `Currently proximity blocking (${willBlock.length})`
             : `Will proximity block or be blocked by (${willBlock.length})`;
-          ref!.parentElement!.insertBefore(makeTable(header, willBlock), ref);
+          detail.appendChild(makeTable(header, willBlock));
+        }
+        if (!detail.querySelector(".uwftpb-container")) {
+          makeChildNode(detail, "p", "No other nominations currently block or are blocked by this one.");
         }
       };
 
+      const openProximityWindow = async () => {
+        const { container, dismiss } = await toolbox.createModal("uwtpb-modal");
+        if (document.documentElement.classList.contains("dark") || document.body.classList.contains("dark")) {
+          container.classList.add("uwt-dark");
+        }
+        const close = makeChildNode(container, "button", "\u00d7");
+        close.className = "uwtpb-x";
+        close.addEventListener("click", dismiss);
+        makeChildNode(container, "h2", "Proximity blocks");
+        const body = makeChildNode(container, "div");
+        body.className = "uwtpb-body";
+
+        if (!loaded) {
+          makeChildNode(body, "p", "Loading nominations...");
+          try {
+            const data = await toolbox.makeRequest("GET", "/api/v1/vault/manage");
+            if (data && data.submissions) handleNominations(data);
+          } catch (e) {
+            logger.error(e);
+          }
+          body.innerHTML = "";
+        }
+        if (!loaded) {
+          makeChildNode(body, "p", "Could not load your nominations.");
+          return;
+        }
+
+        const side = makeChildNode(body, "div");
+        side.className = "uwtpb-side";
+        const allLabel = makeChildNode(side, "label");
+        allLabel.className = "uwtpb-all";
+        const allBox = makeChildNode(allLabel, "input") as HTMLInputElement;
+        allBox.type = "checkbox";
+        allLabel.appendChild(document.createTextNode(" Include nominations that are no longer active"));
+        const list = makeChildNode(side, "div");
+        list.className = "uwtpb-list";
+        const detail = makeChildNode(body, "div");
+        detail.className = "uwtpb-detail";
+
+        const cache = new Map<string, Nomination[]>();
+        const relationsFor = (nom: Nomination) => {
+          let r = cache.get(nom.id);
+          if (!r) {
+            r = proximityBlockingFor(nom);
+            cache.set(nom.id, r);
+          }
+          return r;
+        };
+
+        const rebuild = () => {
+          list.innerHTML = "";
+          detail.innerHTML = "";
+          const related = nominations
+            .filter(n => allBox.checked || isActive(n))
+            .map(n => ({ nom: n, blocking: relationsFor(n) }))
+            .filter(e => e.blocking.length > 0)
+            .sort((a, b) => b.nom.order - a.nom.order);
+          if (related.length === 0) {
+            makeChildNode(list, "p", "None of your nominations are currently affected by proximity blocking.");
+            return;
+          }
+          const buttons: HTMLElement[] = [];
+          for (const { nom, blocking } of related) {
+            const button = makeChildNode(list, "button");
+            button.className = "uwtpb-item";
+            makeChildNode(button, "span", nom.title || "(untitled)");
+            const blocked = isProximityBlocked(nom, blocking);
+            makeChildNode(button, "small", `${STATUS_LABELS[nom.status] ?? nom.status}${blocked ? " - Proximity Blocked" : ""}`);
+            button.addEventListener("click", () => {
+              for (const b of buttons) b.classList.toggle("uwtpb-active", b === button);
+              renderDetail(detail, nom, blocking);
+            });
+            buttons.push(button);
+          }
+          buttons[0].click();
+        };
+        allBox.addEventListener("change", rebuild);
+        rebuild();
+      };
+
+      // redesign: shown in the Wayfarer Tools menu (the button at the bottom left)
+      toolbox.addMenuItem("proximity-block", {
+        label: "Proximity blocks",
+        icon: "<svg viewBox=\"0 0 24 24\" width=\"20\" height=\"20\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><line x1=\"22\" y1=\"12\" x2=\"18\" y2=\"12\"/><line x1=\"6\" y1=\"12\" x2=\"2\" y2=\"12\"/><line x1=\"12\" y1=\"6\" x2=\"12\" y2=\"2\"/><line x1=\"12\" y1=\"22\" x2=\"12\" y2=\"18\"/></svg>",
+        callback: () => { void openProximityWindow(); },
+      });
+
       toolbox.interceptOpenJson("GET", "/api/v1/vault/manage", handleNominations);
-      toolbox.observeAddedNodes("APP-SUBMISSIONS-LIST-ITEM", formatItem);
     },
   });
 };
