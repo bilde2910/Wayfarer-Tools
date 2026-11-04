@@ -1,6 +1,7 @@
 import { BaseSchema, IDBStoreConnection } from "./idb";
 import { ApiResult, DiscordUserLink, PostBody, Responses } from "./types";
 import { untilTruthy, cyrb53, iterObject, makeChildNode, Logger, uwtPageWin, uwtPageXHR } from "./utils";
+import { uwtStatusStack } from "./status-stack";
 import { CorePluginAPI } from "./scripts/uwt-core";
 
 import ImportIcon from "../assets/import.svg";
@@ -1290,6 +1291,7 @@ function uwtAddLauncher(options: AddonOptionsEntry[]) {
   };
   // rebuilt each time it opens, so entries added by addons after startup are included
   const openMenu = () => {
+    menu.dataset.placement = document.getElementById("uwt-status-stack")?.dataset.placement ?? "corner";
     menu.innerHTML = "";
     const items = Object.values(menuItems).sort((a, b) => a.label.localeCompare(b.label));
     for (const item of items) {
@@ -1317,7 +1319,8 @@ function uwtAddLauncher(options: AddonOptionsEntry[]) {
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") closeMenu();
   });
-  document.body.append(menu, btn);
+  document.body.appendChild(menu);
+  void uwtStatusStack().then(stack => stack.appendChild(btn));
 }
 
 function uwtFillSettingsPane(box: HTMLElement, options: AddonOptionsEntry[]) {

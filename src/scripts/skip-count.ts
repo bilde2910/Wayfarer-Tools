@@ -54,6 +54,7 @@ export default () => {
         if (counter === null) {
           const div = makeChildNode(container, "div");
           div.classList.add("uwftsc-outer", "uwt-pill");
+          div.title = "Skip count";
           label = makeChildNode(div, "p", "Skip Count:");
           label.id = "uwftsc-label";
           counter = makeChildNode(div, "p", "Loading…");

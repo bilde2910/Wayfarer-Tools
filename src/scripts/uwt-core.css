@@ -276,17 +276,43 @@ input.uwftcore-ui-large-input {
   color: #20B8E3;
 }
 
-/* redesign: shared stack of status badges (skip count, appeal timer), bottom left above the review counter */
+/* redesign: all status items (timer, counts, version, Wayfarer Tools button) live in #uwt-status-stack, which is
+   mounted in Wayfarer's top bar ("header") or, on pages without it, fixed to the bottom left ("corner") */
 #uwt-status-stack {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#uwt-status-stack[data-placement="header"] {
+  position: static;
+  flex: 0 0 auto;
+  flex-direction: row;
+}
+
+#uwt-status-stack[data-placement="corner"] {
   position: fixed;
   left: 16px;
-  bottom: 102px;
+  bottom: 16px;
   z-index: 99990;
-  display: flex;
-  flex-direction: column;
+  flex-direction: column-reverse;
   align-items: flex-start;
-  gap: 6px;
 }
+
+/* order: left to right in the top bar, bottom to top in the corner */
+[data-placement="header"] > #uwftmr-outer { order: 1; }
+[data-placement="header"] > .uwtrct-outer { order: 2; }
+[data-placement="header"] > .uwftsc-outer { order: 3; }
+[data-placement="header"] > .uwftat-outer { order: 4; }
+[data-placement="header"] > #uwtvd-display { order: 5; }
+[data-placement="header"] > #uwt-menu-button { order: 6; }
+
+[data-placement="corner"] > #uwt-menu-button { order: 1; }
+[data-placement="corner"] > #uwtvd-display { order: 2; }
+[data-placement="corner"] > .uwtrct-outer { order: 3; }
+[data-placement="corner"] > .uwftsc-outer { order: 4; }
+[data-placement="corner"] > .uwftat-outer { order: 5; }
+[data-placement="corner"] > #uwftmr-outer { order: 6; }
 
 .uwt-pill {
   display: flex;
@@ -314,12 +340,45 @@ input.uwftcore-ui-large-input {
   font-variant-numeric: tabular-nums;
 }
 
-/* redesign: the Wayfarer Tools button (bottom left) and its menu */
+/* in the top bar the pills are lighter than the black bar and a bit smaller */
+[data-placement="header"] > .uwt-pill {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: none;
+  font-size: 13px;
+  padding: 0.2em 0.7em;
+}
+
+[data-placement="header"] > .uwt-pill p:nth-child(2) {
+  font-size: 16px;
+}
+
+/* In the top bar our items must leave room for Wayfarer's own navigation: drop the version label first, then the
+   labels (numbers only), then the counts. Hover an item for its name. */
+@media (max-width: 1649px) {
+  [data-placement="header"] > #uwtvd-display {
+    display: none;
+  }
+}
+
+@media (max-width: 1399px) {
+  [data-placement="header"] > .uwt-pill p:first-child,
+  [data-placement="header"] > #uwftmr-outer #uwftmr-counter-label {
+    display: none;
+  }
+}
+
+@media (max-width: 1099px) {
+  [data-placement="header"] > .uwtrct-outer,
+  [data-placement="header"] > .uwftsc-outer,
+  [data-placement="header"] > .uwftat-outer {
+    display: none;
+  }
+}
+
+/* the Wayfarer Tools button and its menu */
 #uwt-menu-button {
-  position: fixed;
-  left: 16px;
-  bottom: 16px;
-  z-index: 99990;
+  position: relative;
+  flex: 0 0 auto;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -333,6 +392,14 @@ input.uwftcore-ui-large-input {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
   padding: 0;
   opacity: 0.75;
+}
+
+[data-placement="header"] > #uwt-menu-button {
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.25);
+  box-shadow: none;
 }
 
 #uwt-menu-button:hover,
@@ -354,6 +421,15 @@ input.uwftcore-ui-large-input {
   background: #111827;
   color: #f9fafb;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
+}
+
+/* opened from the top bar: below it, at the right */
+#uwt-menu[data-placement="header"] {
+  top: 76px;
+  right: 16px;
+  bottom: auto;
+  left: auto;
+  max-height: calc(100vh - 100px);
 }
 
 #uwt-menu[hidden] {

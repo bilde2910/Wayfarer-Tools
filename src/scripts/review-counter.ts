@@ -17,7 +17,8 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { register } from "../core";
-import { untilTruthy, makeChildNode } from "../utils";
+import { makeChildNode } from "../utils";
+import { uwtStatusStack } from "../status-stack";
 import { AnySubmittedReview } from "../types";
 
 import "./review-counter.css";
@@ -34,12 +35,12 @@ export default () => {
     },
     initialize: (toolbox, _logger, _config) => {
       const injectCounter = async () => {
-        // redesign: wf-logo (and the header it sat in) no longer exists; the counter is a small badge fixed
-        // to the bottom left, above the Nomination map and settings buttons (see review-counter.css)
-        const container = await untilTruthy(() => document.body);
+        // redesign: wf-logo (and the header it sat in) no longer exists; the counter is a pill in the
+        // shared status container, which sits in Wayfarer's top bar (see status-stack.ts)
+        const container = await uwtStatusStack();
         if (document.getElementById("uwtrct-counter") === null) {
           const div = makeChildNode(container, "div");
-          div.classList.add("uwtrct-outer");
+          div.classList.add("uwtrct-outer", "uwt-pill");
           div.title = "Click to reset the review count";
           const countLabel = makeChildNode(div, "p", "Review count:");
           const counter = makeChildNode(div, "p", toolbox.session.get("reviews").toString());

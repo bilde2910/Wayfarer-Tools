@@ -17,7 +17,8 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, register, SelectBoxEditor } from "../core";
-import { untilTruthy, makeChildNode, uwtPageWin, uwtPageXHR } from "../utils";
+import { makeChildNode, uwtPageWin, uwtPageXHR } from "../utils";
+import { uwtStatusStack } from "../status-stack";
 import { ApiResult } from "../types";
 
 import "./version-display.css";
@@ -79,9 +80,10 @@ export default () => {
         let box = document.getElementById("uwtvd-display");
         let span;
         if (box === null) {
-          // redesign: wf-logo no longer exists; the version is a small label fixed to the bottom left
-          const body = await untilTruthy(() => document.body);
-          box = makeChildNode(body, "div");
+          // redesign: wf-logo no longer exists; the version is a small label in the shared status container,
+          // which sits in Wayfarer's top bar (see status-stack.ts)
+          const stack = await uwtStatusStack();
+          box = makeChildNode(stack, "div");
           box.id = "uwtvd-display";
           span = makeChildNode(box, "span");
         } else {

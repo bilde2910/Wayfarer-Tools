@@ -55,6 +55,7 @@ export default () => {
         if (counter === null) {
           const div = makeChildNode(container, "div");
           div.classList.add("uwftat-outer", "uwt-pill");
+          div.title = "Time until you can appeal again";
           label = makeChildNode(div, "p", result?.canAppeal ? AVAILABLE_LABEL : UNAVAILABLE_LABEL);
           label.id = "uwftat-label";
           counter = makeChildNode(div, "p", "Loading…");

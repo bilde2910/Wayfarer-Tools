@@ -1,30 +1,7 @@
 .uwtrct-outer {
-  position: fixed;
-  left: 16px;
-  bottom: 64px;
-  z-index: 99990;
-  display: flex;
-  align-items: center;
-  gap: 0.5em;
-  margin: 0;
-  padding: 0.25em 0.8em;
-  border-radius: 999px;
-  background: rgba(17, 24, 39, 0.92);
-  color: #f9fafb;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-  font-size: 14px;
-  line-height: 1.2;
   cursor: pointer;
-  user-select: none;
-}
-
-.uwtrct-outer p {
-  margin: 0;
 }
 
 .uwtrct-outer p:nth-child(2) {
-  font-size: 18px;
-  font-weight: bold;
   color: #20B8E3;
-  font-variant-numeric: tabular-nums;
 }

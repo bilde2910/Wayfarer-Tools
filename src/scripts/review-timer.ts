@@ -17,7 +17,8 @@
 // If not, see <https://www.gnu.org/licenses/>.
 
 import { CheckboxEditor, NumericInputEditor, register } from "../core";
-import { untilTruthy, insertAfter } from "../utils";
+import { insertAfter } from "../utils";
+import { uwtStatusStack } from "../status-stack";
 import { AnyReview } from "../types";
 
 import "./review-timer.css";
@@ -62,10 +63,11 @@ export default () => {
         const st = document.createElement("style");
         st.id = "uwftmr-style";
         st.textContent = `
-          #uwftmr-outer.uwftmr-div{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:100000;
-            display:flex;align-items:center;gap:.6em;margin:0;padding:.25em .9em;border-radius:999px;
+          #uwftmr-outer.uwftmr-div{display:flex;align-items:center;gap:.6em;margin:0;padding:.25em .9em;border-radius:999px;
             background:rgba(17,24,39,.92);color:#f9fafb;box-shadow:0 2px 8px rgba(0,0,0,.4);
-            font-size:14px;line-height:1.2;pointer-events:none}
+            font-size:14px;line-height:1.2;white-space:nowrap;pointer-events:none}
+          [data-placement="header"] > #uwftmr-outer.uwftmr-div{background:rgba(255,255,255,.12);box-shadow:none;font-size:13px;padding:.2em .8em}
+          [data-placement="header"] > #uwftmr-outer .uwftmr-counter{font-size:16px}
           #uwftmr-outer p{margin:0}
           #uwftmr-outer .uwftmr-counter{font-size:18px;font-weight:bold;color:#20b8e3;font-variant-numeric:tabular-nums}
           #uwftmr-outer .uwftmr-counter.uwftmr-warn{color:#f2a134}
@@ -78,14 +80,16 @@ export default () => {
         console.log("[I]", "[unified-wf-tools]", "[patch]", "review-timer received review data; expires =", candidate && candidate.expires, "; keys =", candidate ? Object.keys(candidate).slice(0, 12).join(",") : "none");
         submitButtonClicked = false;
         expireTime = candidate.expires;
-        // redesign: wf-logo no longer exists; the timer is a small fixed badge on <body>
+        // redesign: wf-logo no longer exists; the timer is a pill in the shared status container, which sits
+        // in Wayfarer's top bar (see status-stack.ts)
         ensureTimerStyle();
-        const container = await untilTruthy(() => document.body);
+        const container = await uwtStatusStack();
         let counter = document.getElementById("uwftmr-counter");
         if (counter === null) {
           const div = document.createElement("div");
           div.id = "uwftmr-outer";
           div.classList.add("uwftmr-div");
+          div.title = "Time remaining";
           const countLabel = document.createElement("p");
           countLabel.id = "uwftmr-counter-label";
           countLabel.textContent = "Time remaining:";
